@@ -8,6 +8,7 @@ const rateLimit = require('express-rate-limit');
 
 const leadsRouter = require('./routes/leads');
 const assessmentRouter = require('./routes/assessment');
+const dashboardRouter = require('./routes/dashboard');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +29,7 @@ app.use('/api', apiLimiter);
 // --- API routes ----------------------------------------------------------
 app.use('/api/leads', leadsRouter);
 app.use('/api/assessment', assessmentRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, status: 'healthy', timestamp: new Date().toISOString() });
@@ -35,6 +37,10 @@ app.get('/api/health', (req, res) => {
 
 // --- Static frontend -----------------------------------------------------
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
 
 // Fallback to index.html for any non-API route (simple SPA-style routing).
 app.get('*', (req, res, next) => {

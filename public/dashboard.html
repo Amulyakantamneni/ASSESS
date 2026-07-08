@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Dashboard — MaturityAssess</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+    :root {
+        --primary: #0f3a7d;
+        --secondary: #1e5a96;
+        --accent: #00a8e8;
+        --light-accent: #e0f4ff;
+        --success: #10b981;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --dark: #1f2937;
+        --light: #f9fafb;
+        --border: #e5e7eb;
+        --muted: #6b7280;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--dark);
+        background: var(--light);
+    }
+    .topbar {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: #fff;
+        padding: 20px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .topbar h1 { font-size: 1.4rem; font-weight: 700; }
+    .topbar .sub { font-size: 0.85rem; opacity: 0.85; margin-top: 2px; }
+    .topbar-controls { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .topbar-controls a { color: #fff; text-decoration: none; font-size: 0.85rem; opacity: 0.9; border: 1px solid rgba(255,255,255,0.4); padding: 6px 12px; border-radius: 6px; }
+    .topbar-controls a:hover { background: rgba(255,255,255,0.12); }
+    .refresh-toggle { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; }
+    #lastUpdated { font-size: 0.78rem; opacity: 0.85; }
+    button.iconbtn {
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.4);
+        color: #fff;
+        border-radius: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+        font-size: 0.85rem;
+    }
+    button.iconbtn:hover { background: rgba(255,255,255,0.28); }
+
+    main { max-width: 1280px; margin: 0 auto; padding: 28px 24px 60px; }
+
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+    }
+    .kpi-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .kpi-card .label { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+    .kpi-card .value { font-size: 1.9rem; font-weight: 700; color: var(--primary); }
+    .kpi-card .hint { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 18px;
+        margin-bottom: 18px;
+    }
+    .grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-bottom: 18px;
+    }
+    @media (max-width: 900px) {
+        .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .panel h2 { font-size: 1rem; margin-bottom: 4px; color: var(--dark); }
+    .panel .panel-sub { font-size: 0.78rem; color: var(--muted); margin-bottom: 14px; }
+    .chart-wrap { position: relative; height: 260px; }
+    .chart-wrap.tall { height: 320px; }
+
+    .empty-state { color: var(--muted); font-size: 0.85rem; padding: 30px 0; text-align: center; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    thead th {
+        text-align: left;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--muted);
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+    }
+    thead th:hover { color: var(--primary); }
+    thead th .arrow { opacity: 0.5; font-size: 0.7rem; }
+    tbody td { padding: 9px 10px; border-bottom: 1px solid #f1f2f4; vertical-align: top; }
+    tbody tr:hover { background: var(--light-accent); }
+    td.msg { max-width: 260px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .table-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+    .table-toolbar input {
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        width: 260px;
+        max-width: 100%;
+    }
+    .table-toolbar input:focus { outline: none; border-color: var(--accent); }
+    .btn-outline {
+        border: 1px solid var(--primary);
+        color: var(--primary);
+        background: #fff;
+        border-radius: 6px;
+        padding: 8px 14px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .btn-outline:hover { background: var(--light-accent); }
+    .table-scroll { overflow-x: auto; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.72rem; background: var(--light-accent); color: var(--primary); }
+
+    footer.note { text-align: center; font-size: 0.75rem; color: var(--muted); margin-top: 30px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <div>
+        <h1>MaturityAssess — Dashboard</h1>
+        <div class="sub">Live view of leads and assessment activity</div>
+    </div>
+    <div class="topbar-controls">
+        <span id="lastUpdated">—</span>
+        <label class="refresh-toggle"><input type="checkbox" id="autoRefresh" checked> Auto-refresh (30s)</label>
+        <button class="iconbtn" id="refreshBtn">Refresh now</button>
+        <a href="/">← Back to site</a>
+    </div>
+</div>
+
+<main>
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <div class="grid-2">
+        <div class="panel">
+            <h2>Activity — last 30 days</h2>
+            <div class="panel-sub">New leads vs. completed assessments, per day</div>
+            <div class="chart-wrap"><canvas id="activityChart"></canvas></div>
+        </div>
+        <div class="panel">
+            <h2>Maturity level distribution</h2>
+            <div class="panel-sub">Completed assessments by overall level (1–5)</div>
+            <div class="chart-wrap"><canvas id="levelChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="grid-3">
+        <div class="panel">
+            <h2>Capability profile</h2>
+            <div class="panel-sub">Average score per category, across all assessments</div>
+            <div class="chart-wrap tall"><canvas id="radarChart"></canvas></div>
+        </div>
+        <div class="panel">
+            <h2>Most common gaps</h2>
+            <div class="panel-sub">How often each category shows up as a top-3 gap</div>
+            <div class="chart-wrap tall"><canvas id="gapChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="table-toolbar">
+            <div>
+                <h2 style="margin-bottom:2px;">Leads</h2>
+                <div class="panel-sub" style="margin-bottom:0;">Most recent 50 submissions</div>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input type="text" id="leadSearch" placeholder="Search name, email, company…">
+                <button class="btn-outline" id="exportBtn">Export CSV</button>
+            </div>
+        </div>
+        <div class="table-scroll">
+            <table id="leadsTable">
+                <thead>
+                    <tr>
+                        <th data-key="createdAt">Date <span class="arrow">▼</span></th>
+                        <th data-key="name">Name</th>
+                        <th data-key="email">Email</th>
+                        <th data-key="company">Company</th>
+                        <th data-key="source">Source</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody id="leadsBody"></tbody>
+            </table>
+            <div class="empty-state" id="leadsEmpty" style="display:none;">No leads yet.</div>
+        </div>
+    </div>
+
+    <footer class="note">Internal view — not linked from the public site. Data refreshes automatically.</footer>
+</main>
+
+<script>
+const API = '/api/dashboard/stats';
+let currentLeads = [];
+let sortState = { key: 'createdAt', dir: 'desc' };
+let charts = {};
+
+const fmtDate = (iso) => new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+const fmtDay = (isoDay) => new Date(isoDay + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+function kpiCard(label, value, hint) {
+    return `<div class="kpi-card"><div class="label">${label}</div><div class="value">${value}</div><div class="hint">${hint || ''}</div></div>`;
+}
+
+function renderKPIs(d) {
+    const t = d.totals;
+    document.getElementById('kpiGrid').innerHTML = [
+        kpiCard('Total Leads', t.leads, 'All-time submissions'),
+        kpiCard('Assessments Completed', t.assessments, `${t.sessions} started`),
+        kpiCard('Completion Rate', t.completionRate + '%', 'Started → completed'),
+        kpiCard('Avg. Maturity Score', t.avgOverallScore.toFixed(2), 'out of 5.00'),
+    ].join('');
+}
+
+function upsertChart(key, ctx, config) {
+    if (charts[key]) { charts[key].destroy(); }
+    charts[key] = new Chart(ctx, config);
+}
+
+function renderActivityChart(d) {
+    const labels = d.timeSeries.days.map(fmtDay);
+    upsertChart('activity', document.getElementById('activityChart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Leads', data: d.timeSeries.leads, borderColor: '#00a8e8', backgroundColor: 'rgba(0,168,232,0.1)', tension: 0.3, fill: true },
+                { label: 'Assessments', data: d.timeSeries.assessments, borderColor: '#0f3a7d', backgroundColor: 'rgba(15,58,125,0.08)', tension: 0.3, fill: true },
+            ],
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } } },
+            plugins: { legend: { position: 'bottom' } },
+        },
+    });
+}
+
+function renderLevelChart(d) {
+    const levelNames = { 1: 'L1 Initial', 2: 'L2 Repeatable', 3: 'L3 Defined', 4: 'L4 Managed', 5: 'L5 Optimizing' };
+    const colors = ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#10b981'];
+    upsertChart('level', document.getElementById('levelChart'), {
+        type: 'bar',
+        data: {
+            labels: d.maturityLevelDistribution.map((x) => levelNames[x.level]),
+            datasets: [{ label: 'Assessments', data: d.maturityLevelDistribution.map((x) => x.count), backgroundColor: colors }],
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            plugins: { legend: { display: false } },
+        },
+    });
+}
+
+function renderRadarChart(d) {
+    if (!d.categoryAverages.length || d.totals.assessments === 0) {
+        document.getElementById('radarChart').parentElement.innerHTML = '<div class="empty-state">No assessment data yet.</div>';
+        return;
+    }
+    upsertChart('radar', document.getElementById('radarChart'), {
+        type: 'radar',
+        data: {
+            labels: d.categoryAverages.map((c) => c.label),
+            datasets: [{
+                label: 'Avg. score',
+                data: d.categoryAverages.map((c) => c.avgScore),
+                borderColor: '#0f3a7d',
+                backgroundColor: 'rgba(15,58,125,0.15)',
+                pointBackgroundColor: '#00a8e8',
+            }],
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: { r: { min: 0, max: 5, ticks: { stepSize: 1 } } },
+            plugins: { legend: { display: false } },
+        },
+    });
+}
+
+function renderGapChart(d) {
+    if (!d.topGapsAggregate.length) {
+        document.getElementById('gapChart').parentElement.innerHTML = '<div class="empty-state">No gap data yet.</div>';
+        return;
+    }
+    upsertChart('gap', document.getElementById('gapChart'), {
+        type: 'bar',
+        data: {
+            labels: d.topGapsAggregate.map((g) => g.category),
+            datasets: [{ label: 'Times flagged as top gap', data: d.topGapsAggregate.map((g) => g.count), backgroundColor: '#f59e0b' }],
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true, maintainAspectRatio: false,
+            scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+            plugins: { legend: { display: false } },
+        },
+    });
+}
+
+function sortLeads(leads) {
+    const { key, dir } = sortState;
+    const sorted = [...leads].sort((a, b) => {
+        let av = a[key] || '', bv = b[key] || '';
+        if (key === 'createdAt') { av = new Date(av).getTime(); bv = new Date(bv).getTime(); }
+        else { av = String(av).toLowerCase(); bv = String(bv).toLowerCase(); }
+        if (av < bv) return dir === 'asc' ? -1 : 1;
+        if (av > bv) return dir === 'asc' ? 1 : -1;
+        return 0;
+    });
+    return sorted;
+}
+
+function renderLeadsTable() {
+    const q = document.getElementById('leadSearch').value.trim().toLowerCase();
+    let filtered = currentLeads.filter((l) =>
+        !q || [l.name, l.email, l.company].some((v) => (v || '').toLowerCase().includes(q))
+    );
+    filtered = sortLeads(filtered);
+
+    const body = document.getElementById('leadsBody');
+    const empty = document.getElementById('leadsEmpty');
+    if (!filtered.length) {
+        body.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+    }
+    empty.style.display = 'none';
+    body.innerHTML = filtered.map((l) => `
+        <tr>
+            <td>${fmtDate(l.createdAt)}</td>
+            <td>${escapeHtml(l.name)}</td>
+            <td>${escapeHtml(l.email)}</td>
+            <td>${escapeHtml(l.company || '—')}</td>
+            <td><span class="badge">${escapeHtml(l.source || 'unknown')}</span></td>
+            <td class="msg" title="${escapeHtml(l.message || '')}">${escapeHtml(l.message || '—')}</td>
+        </tr>
+    `).join('');
+}
+
+function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function exportCSV() {
+    const rows = [['Date', 'Name', 'Email', 'Company', 'Source', 'Message']];
+    sortLeads(currentLeads).forEach((l) => rows.push([l.createdAt, l.name, l.email, l.company || '', l.source || '', (l.message || '').replace(/\n/g, ' ')]));
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `leads-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+async function loadData() {
+    try {
+        const res = await fetch(API);
+        const d = await res.json();
+        if (!d.ok) throw new Error('bad response');
+
+        renderKPIs(d);
+        renderActivityChart(d);
+        renderLevelChart(d);
+        renderRadarChart(d);
+        renderGapChart(d);
+
+        currentLeads = d.recentLeads;
+        renderLeadsTable();
+
+        document.getElementById('lastUpdated').textContent = 'Updated ' + new Date(d.generatedAt).toLocaleTimeString();
+    } catch (err) {
+        document.getElementById('lastUpdated').textContent = 'Failed to load data';
+        console.error(err);
+    }
+}
+
+document.querySelectorAll('#leadsTable thead th[data-key]').forEach((th) => {
+    th.addEventListener('click', () => {
+        const key = th.dataset.key;
+        if (sortState.key === key) sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+        else { sortState.key = key; sortState.dir = 'desc'; }
+        document.querySelectorAll('#leadsTable thead .arrow').forEach((a) => a.textContent = '');
+        th.querySelector('.arrow')?.remove();
+        th.insertAdjacentHTML('beforeend', ` <span class="arrow">${sortState.dir === 'asc' ? '▲' : '▼'}</span>`);
+        renderLeadsTable();
+    });
+});
+
+document.getElementById('leadSearch').addEventListener('input', renderLeadsTable);
+document.getElementById('exportBtn').addEventListener('click', exportCSV);
+document.getElementById('refreshBtn').addEventListener('click', loadData);
+
+let intervalId = null;
+function setupAutoRefresh() {
+    if (intervalId) clearInterval(intervalId);
+    if (document.getElementById('autoRefresh').checked) {
+        intervalId = setInterval(loadData, 30000);
+    }
+}
+document.getElementById('autoRefresh').addEventListener('change', setupAutoRefresh);
+
+loadData();
+setupAutoRefresh();
+</script>
+
+</body>
+</html>

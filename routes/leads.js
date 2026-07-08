@@ -4,11 +4,28 @@
 
 const express = require('express');
 const { nanoid } = require('nanoid');
+const { Resend } = require('resend');
 const db = require('../db');
 
 const router = express.Router();
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+
+async function notifyNewLead(lead) {
+  if (!resend || !process.env.NOTIFY_EMAIL) return;
+  try {
+    await resend.emails.send({
+      from: process.env.NOTIFY_FROM_EMAIL || 'onboarding@resend.dev',
+      to: process.env.NOTIFY_EMAIL,
+      subject: `New lead: ${lead.name}`,
+      text: `Name: ${lead.name}\nEmail: ${lead.email}\nCompany: ${lead.company || '-'}\nMessage: ${lead.message || '-'}\nSource: ${lead.source}`,
+    });
+  } catch (err) {
+    console.error('Failed to send lead notification email:', err);
+  }
+}
 
 function validateLead(body) {
   const errors = [];
@@ -42,6 +59,7 @@ router.post('/', async (req, res) => {
   };
 
   await db.insert('leads', lead);
+  notifyNewLead(lead);
 
   return res.status(201).json({
     ok: true,
