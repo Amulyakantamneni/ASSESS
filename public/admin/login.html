@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — KVH</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-box { max-width: 380px; width: 100%; background: white; border-radius: 14px; padding: 2.5rem; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 1px solid var(--border); }
+    .login-box h1 { color: var(--primary); font-size: 1.5rem; margin-bottom: 0.5rem; text-align: center; }
+    .login-box p.hint { color: var(--muted); text-align: center; font-size: 0.85rem; margin-bottom: 1.75rem; }
+</style>
+</head>
+<body>
+<div class="login-box">
+    <a href="/" class="logo" style="display:block;text-align:center;margin-bottom:1rem;">🛡️ KVH</a>
+    <h1>Admin Login</h1>
+    <p class="hint">Manage industries, standards, and assessment templates.</p>
+    <form id="loginForm">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" required autocomplete="username" />
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" required autocomplete="current-password" />
+        </div>
+        <div class="form-error" id="loginError"></div>
+        <button type="submit" class="btn btn-primary" id="loginBtn" style="width:100%;">Log In</button>
+    </form>
+</div>
+<script>
+const API_BASE = '/api';
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById('loginError');
+    errorEl.classList.remove('visible');
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    try {
+        const res = await fetch(`${API_BASE}/admin/login`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Login failed.');
+        window.location.href = '/admin';
+    } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.classList.add('visible');
+        btn.disabled = false;
+    }
+});
+</script>
+</body>
+</html>

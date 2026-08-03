@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — KVH</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+    .admin-topbar { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 1.25rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+    .admin-topbar a, .admin-topbar button { color: white; }
+    main.admin-main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tab-btn { background: white; border: 1px solid var(--border); padding: 0.6rem 1.1rem; border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--muted); }
+    .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .panel { background: white; border-radius: 12px; padding: 1.75rem; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    th { text-align: left; padding: 0.6rem; border-bottom: 2px solid var(--border); color: var(--muted); font-size: 0.75rem; text-transform: uppercase; }
+    td { padding: 0.6rem; border-bottom: 1px solid #f1f2f4; }
+    .add-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; align-items: end; }
+    .add-form .form-group { margin-bottom: 0; }
+    .delete-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 0.85rem; padding: 0.3rem 0.5rem; }
+    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .kpi-card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; }
+    .kpi-card .val { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+    .kpi-card .lbl { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div class="admin-topbar">
+    <div>🛡️ KVH Admin</div>
+    <div style="display:flex;gap:1.5rem;align-items:center;">
+        <a href="/dashboard">Analytics Dashboard</a>
+        <a href="/">View Site</a>
+        <button id="logoutBtn" class="btn-sm" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);border-radius:6px;padding:0.4rem 0.9rem;">Log Out</button>
+    </div>
+</div>
+
+<main class="admin-main">
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="industries">Industries</button>
+        <button class="tab-btn" data-tab="standards">Standards</button>
+        <button class="tab-btn" data-tab="templates">Assessment Templates</button>
+        <button class="tab-btn" data-tab="analytics">Analytics</button>
+    </div>
+    <div id="tabHost"></div>
+</main>
+
+<script src="/app.js"></script>
+<script>
+let cache = { industries: [], standards: [], templates: [] };
+
+async function checkSession() {
+    const res = await fetch(`${API_BASE}/admin/session`);
+    const data = await res.json();
+    if (!data.isAdmin) {
+        window.location.href = '/admin/login.html';
+        return false;
+    }
+    return true;
+}
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await fetch(`${API_BASE}/admin/logout`, { method: 'POST' });
+    window.location.href = '/admin/login.html';
+});
+
+document.querySelectorAll('.tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderTab(btn.dataset.tab);
+    });
+});
+
+async function loadAll() {
+    const [i, s, t] = await Promise.all([
+        fetch(`${API_BASE}/admin/industries`).then((r) => r.json()),
+        fetch(`${API_BASE}/admin/standards`).then((r) => r.json()),
+        fetch(`${API_BASE}/admin/templates`).then((r) => r.json()),
+    ]);
+    cache.industries = i.industries || [];
+    cache.standards = s.standards || [];
+    cache.templates = t.templates || [];
+}
+
+function esc(str) { const d = document.createElement('div'); d.textContent = str == null ? '' : String(str); return d.innerHTML; }
+
+async function renderTab(tab) {
+    const host = document.getElementById('tabHost');
+    if (tab === 'industries') return renderIndustries(host);
+    if (tab === 'standards') return renderStandards(host);
+    if (tab === 'templates') return renderTemplates(host);
+    if (tab === 'analytics') return renderAnalytics(host);
+}
+
+function renderIndustries(host) {
+    host.innerHTML = `
+        <div class="panel">
+            <div class="add-form">
+                <div class="form-group"><label>Name</label><input id="newIndustryName" placeholder="e.g. Healthcare" /></div>
+                <div class="form-group"><label>Slug</label><input id="newIndustrySlug" placeholder="healthcare" /></div>
+                <div class="form-group"><label>Description</label><input id="newIndustryDesc" placeholder="Short description" /></div>
+                <button class="btn btn-primary" id="addIndustryBtn">Add Industry</button>
+            </div>
+            <table><thead><tr><th>Name</th><th>Slug</th><th>Description</th><th></th></tr></thead>
+            <tbody>${cache.industries.map((i) => `
+                <tr><td>${esc(i.name)}</td><td>${esc(i.slug)}</td><td>${esc(i.description)}</td>
+                <td><button class="delete-btn" data-id="${i.id}">Delete</button></td></tr>
+            `).join('')}</tbody></table>
+        </div>
+    `;
+    document.getElementById('addIndustryBtn').addEventListener('click', async () => {
+        const name = document.getElementById('newIndustryName').value.trim();
+        const slug = document.getElementById('newIndustrySlug').value.trim();
+        const description = document.getElementById('newIndustryDesc').value.trim();
+        if (!name || !slug) return alert('Name and slug are required.');
+        await fetch(`${API_BASE}/admin/industries`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, slug, description }) });
+        await loadAll(); renderIndustries(host);
+    });
+    host.querySelectorAll('.delete-btn').forEach((btn) => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this industry? This also removes its standards and templates.')) return;
+        await fetch(`${API_BASE}/admin/industries/${btn.dataset.id}`, { method: 'DELETE' });
+        await loadAll(); renderIndustries(host);
+    }));
+}
+
+function renderStandards(host) {
+    const industryOptions = cache.industries.map((i) => `<option value="${i.id}">${esc(i.name)}</option>`).join('');
+    const industryName = (id) => cache.industries.find((i) => i.id === id)?.name || '—';
+    host.innerHTML = `
+        <div class="panel">
+            <div class="add-form">
+                <div class="form-group"><label>Industry</label><select id="newStandardIndustry">${industryOptions}</select></div>
+                <div class="form-group"><label>Name</label><input id="newStandardName" placeholder="e.g. HIPAA" /></div>
+                <div class="form-group"><label>Slug</label><input id="newStandardSlug" placeholder="hipaa" /></div>
+                <div class="form-group"><label>Description</label><input id="newStandardDesc" placeholder="Short description" /></div>
+                <button class="btn btn-primary" id="addStandardBtn">Add Standard</button>
+            </div>
+            <table><thead><tr><th>Industry</th><th>Name</th><th>Slug</th><th></th></tr></thead>
+            <tbody>${cache.standards.map((s) => `
+                <tr><td>${esc(industryName(s.industryId))}</td><td>${esc(s.name)}</td><td>${esc(s.slug)}</td>
+                <td><button class="delete-btn" data-id="${s.id}">Delete</button></td></tr>
+            `).join('')}</tbody></table>
+        </div>
+    `;
+    document.getElementById('addStandardBtn').addEventListener('click', async () => {
+        const industry_id = document.getElementById('newStandardIndustry').value;
+        const name = document.getElementById('newStandardName').value.trim();
+        const slug = document.getElementById('newStandardSlug').value.trim();
+        const description = document.getElementById('newStandardDesc').value.trim();
+        if (!industry_id || !name || !slug) return alert('Industry, name, and slug are required.');
+        await fetch(`${API_BASE}/admin/standards`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ industry_id, name, slug, description }) });
+        await loadAll(); renderStandards(host);
+    });
+    host.querySelectorAll('.delete-btn').forEach((btn) => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this standard? This also removes its assessment templates.')) return;
+        await fetch(`${API_BASE}/admin/standards/${btn.dataset.id}`, { method: 'DELETE' });
+        await loadAll(); renderStandards(host);
+    }));
+}
+
+function renderTemplates(host) {
+    const standardOptions = cache.standards.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+    const standardName = (id) => cache.standards.find((s) => s.id === id)?.name || '—';
+    host.innerHTML = `
+        <div class="panel">
+            <div class="add-form">
+                <div class="form-group"><label>Standard</label><select id="newTemplateStandard">${standardOptions}</select></div>
+                <div class="form-group"><label>Name</label><input id="newTemplateName" placeholder="e.g. HIPAA Compliance Assessment" /></div>
+                <div class="form-group"><label>Description</label><input id="newTemplateDesc" placeholder="Short description" /></div>
+                <button class="btn btn-primary" id="addTemplateBtn">Add Template</button>
+            </div>
+            <table><thead><tr><th>Standard</th><th>Name</th><th></th></tr></thead>
+            <tbody>${cache.templates.map((t) => `
+                <tr><td>${esc(standardName(t.standardId))}</td><td>${esc(t.name)}</td>
+                <td><button class="delete-btn" data-id="${t.id}">Delete</button></td></tr>
+            `).join('')}</tbody></table>
+        </div>
+    `;
+    document.getElementById('addTemplateBtn').addEventListener('click', async () => {
+        const standard_id = document.getElementById('newTemplateStandard').value;
+        const name = document.getElementById('newTemplateName').value.trim();
+        const description = document.getElementById('newTemplateDesc').value.trim();
+        if (!standard_id || !name) return alert('Standard and name are required.');
+        await fetch(`${API_BASE}/admin/templates`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ standard_id, name, description }) });
+        await loadAll(); renderTemplates(host);
+    });
+    host.querySelectorAll('.delete-btn').forEach((btn) => btn.addEventListener('click', async () => {
+        if (!confirm('Delete this assessment template?')) return;
+        await fetch(`${API_BASE}/admin/templates/${btn.dataset.id}`, { method: 'DELETE' });
+        await loadAll(); renderTemplates(host);
+    }));
+}
+
+async function renderAnalytics(host) {
+    host.innerHTML = '<div class="panel">Loading…</div>';
+    const res = await fetch(`${API_BASE}/dashboard/stats`);
+    const d = await res.json();
+    host.innerHTML = `
+        <div class="kpi-row">
+            <div class="kpi-card"><div class="val">${d.totals.leads}</div><div class="lbl">Total Leads</div></div>
+            <div class="kpi-card"><div class="val">${d.totals.assessments}</div><div class="lbl">Assessments Started</div></div>
+            <div class="kpi-card"><div class="val">${d.totals.completedAssessments}</div><div class="lbl">Completed</div></div>
+            <div class="kpi-card"><div class="val">${d.totals.completionRate}%</div><div class="lbl">Completion Rate</div></div>
+            <div class="kpi-card"><div class="val">${d.totals.premiumCount}</div><div class="lbl">Premium (AI Report)</div></div>
+        </div>
+        <div class="panel">Full charts are on the <a href="/dashboard">Analytics Dashboard</a>.</div>
+    `;
+}
+
+(async () => {
+    const isAdmin = await checkSession();
+    if (!isAdmin) return;
+    await loadAll();
+    renderTab('industries');
+})();
+</script>
+</body>
+</html>

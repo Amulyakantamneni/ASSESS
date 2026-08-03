@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect With Us — KVH</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+    .content { max-width: 900px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+    .content h1 { color: var(--primary); font-size: 2.2rem; margin-bottom: 0.5rem; text-align: center; }
+    .content .lead { text-align: center; color: var(--muted); margin-bottom: 2.5rem; }
+    .connect-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+    @media (max-width: 760px) { .connect-grid { grid-template-columns: 1fr; } }
+    .panel { background: white; border-radius: 14px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid var(--border); }
+    .panel h2 { color: var(--primary); margin-bottom: 0.75rem; font-size: 1.3rem; }
+    .calendly-placeholder {
+        border: 2px dashed var(--border); border-radius: 10px; padding: 2rem; text-align: center; color: var(--muted);
+        margin-top: 1rem;
+    }
+</style>
+</head>
+<body>
+<div class="scroll-progress" id="scrollProgress"></div>
+<nav id="mainNav"><div class="nav-container">
+    <a href="/" class="logo">🛡️ KVH</a>
+    <div class="nav-group">
+        <div class="nav-dropdown"><button class="nav-dropdown-btn">Industries <span class="caret">▾</span></button><div class="nav-dropdown-menu" id="navIndustryMenu"><span class="menu-group-label">Loading…</span></div></div>
+        <div class="nav-dropdown"><button class="nav-dropdown-btn">Learn More <span class="caret">▾</span></button><div class="nav-dropdown-menu">
+            <a href="/learn/cmm.html">What is CMM?</a>
+            <a href="/learn/iso.html">ISO Assessments</a>
+            <a href="/learn/security.html">Security Assessments</a>
+            <a href="/learn/process-maturity.html">Process Maturity Assessments</a>
+            <a href="/learn/compliance.html">Compliance Assessments</a>
+        </div></div>
+        <a href="/assessment" class="btn btn-primary btn-sm">Start Assessment</a>
+    </div>
+</div></nav>
+
+<div class="content">
+    <h1>Connect With Us</h1>
+    <p class="lead">Talk to an expert about a facilitated assessment, or send us a message.</p>
+
+    <div class="connect-grid">
+        <div class="panel" id="schedule">
+            <h2>Schedule a 15-Minute Consultation</h2>
+            <p style="color:var(--muted);font-size:0.92rem;">Pick a time that works for you — no commitment, just a conversation about your assessment needs.</p>
+            <div class="calendly-placeholder">
+                Calendly scheduling will be embedded here.<br>
+                <span style="font-size:0.85rem;">(Set your Calendly link to enable live booking.)</span>
+            </div>
+        </div>
+
+        <div class="panel" id="contact">
+            <h2>Send Us a Message</h2>
+            <form id="leadForm">
+                <div class="form-group">
+                    <label for="leadName">Full Name *</label>
+                    <input type="text" id="leadName" required maxlength="200" />
+                </div>
+                <div class="form-group">
+                    <label for="leadEmail">Work Email *</label>
+                    <input type="email" id="leadEmail" required maxlength="200" />
+                </div>
+                <div class="form-group">
+                    <label for="leadCompany">Company</label>
+                    <input type="text" id="leadCompany" maxlength="200" />
+                </div>
+                <div class="form-group">
+                    <label for="leadMessage">How can we help?</label>
+                    <textarea id="leadMessage" rows="4" maxlength="2000"></textarea>
+                </div>
+                <div class="form-error" id="leadFormError"></div>
+                <div class="form-status" id="leadFormStatus"></div>
+                <button type="submit" class="btn btn-primary" id="leadSubmitBtn" style="width:100%;">Send Message</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<footer><p>&copy; 2026 KVH Assessment Platform.</p></footer>
+<button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
+
+<script>
+const leadForm = document.getElementById('leadForm');
+const leadFormError = document.getElementById('leadFormError');
+const leadFormStatus = document.getElementById('leadFormStatus');
+const leadSubmitBtn = document.getElementById('leadSubmitBtn');
+
+leadForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    leadFormError.classList.remove('visible');
+    leadFormStatus.className = 'form-status';
+
+    const payload = {
+        name: document.getElementById('leadName').value.trim(),
+        email: document.getElementById('leadEmail').value.trim(),
+        company: document.getElementById('leadCompany').value.trim(),
+        message: document.getElementById('leadMessage').value.trim(),
+        source: 'connect-page',
+    };
+
+    leadSubmitBtn.disabled = true;
+    leadSubmitBtn.innerHTML = '<span class="spinner"></span> Sending...';
+
+    try {
+        const res = await fetch(`${API_BASE}/leads`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error((data.detail && (data.detail.join ? data.detail.join(' ') : data.detail)) || 'Something went wrong.');
+        leadFormStatus.textContent = data.message;
+        leadFormStatus.className = 'form-status success';
+        leadForm.reset();
+    } catch (err) {
+        leadFormError.textContent = err.message;
+        leadFormError.classList.add('visible');
+    } finally {
+        leadSubmitBtn.disabled = false;
+        leadSubmitBtn.textContent = 'Send Message';
+    }
+});
+</script>
+<script src="/app.js"></script>
+</body>
+</html>

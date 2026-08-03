@@ -1,1698 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Process Maturity & Gap Assessment Platform</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #0f3a7d;
-            --secondary: #1e5a96;
-            --accent: #00a8e8;
-            --light-accent: #e0f4ff;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --dark: #1f2937;
-            --light: #f9fafb;
-            --border: #e5e7eb;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--dark);
-            background: linear-gradient(135deg, #f8fafc 0%, #f0f4f8 100%);
-            line-height: 1.6;
-        }
-
-        /* Navigation */
-        nav {
-            background: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .nav-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--dark);
-            font-weight: 500;
-            transition: color 0.3s ease;
-        }
-
-        .nav-links a:hover {
-            color: var(--accent);
-        }
-
-        /* Hero Section */
-        .hero {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 6rem 2rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            width: 600px;
-            height: 600px;
-            background: radial-gradient(circle, rgba(0, 168, 232, 0.1) 0%, transparent 70%);
-            border-radius: 50%;
-            top: -200px;
-            right: -200px;
-            pointer-events: none;
-            animation: floatBlob 9s ease-in-out infinite;
-        }
-
-        .hero::after {
-            content: '';
-            position: absolute;
-            width: 420px;
-            height: 420px;
-            background: radial-gradient(circle, rgba(15, 58, 125, 0.08) 0%, transparent 70%);
-            border-radius: 50%;
-            bottom: -180px;
-            left: -160px;
-            pointer-events: none;
-            animation: floatBlob 11s ease-in-out infinite reverse;
-        }
-
-        @keyframes floatBlob {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(24px, -18px) scale(1.08); }
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .hero-content h1,
-        .hero-content .subtitle,
-        .hero-content .cta-buttons {
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.7s ease-out forwards;
-        }
-
-        .hero-content .subtitle { animation-delay: 0.15s; }
-        .hero-content .cta-buttons { animation-delay: 0.3s; }
-
-        h1 {
-            font-size: 3.5rem;
-            font-weight: 900;
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
-            background: linear-gradient(120deg, var(--primary), var(--accent), var(--secondary), var(--primary));
-            background-size: 300% 300%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: gradientShift 8s ease infinite;
-        }
-
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-
-        .subtitle {
-            font-size: 1.25rem;
-            color: #6b7280;
-            max-width: 700px;
-            margin: 0 auto 2.5rem;
-        }
-
-        .cta-buttons {
-            display: flex;
-            gap: 1.5rem;
-            justify-content: center;
-            margin-bottom: 3rem;
-            flex-wrap: wrap;
-        }
-
-        button, .btn {
-            position: relative;
-            overflow: hidden;
-            padding: 1rem 2rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, background 0.3s ease, border-color 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            font-family: inherit;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        button:active, .btn:active {
-            transform: scale(0.96);
-        }
-
-        button:focus-visible, .btn:focus-visible {
-            outline: 2px solid var(--accent);
-            outline-offset: 2px;
-        }
-
-        .ripple {
-            position: absolute;
-            border-radius: 50%;
-            transform: scale(0);
-            animation: rippleAnim 0.6s ease-out;
-            pointer-events: none;
-        }
-
-        @keyframes rippleAnim {
-            to { transform: scale(3.2); opacity: 0; }
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            box-shadow: 0 4px 15px rgba(15, 58, 125, 0.3);
-        }
-
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -75%;
-            width: 45%;
-            height: 100%;
-            background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-            transform: skewX(-20deg);
-            transition: left 0.6s ease;
-            pointer-events: none;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 24px rgba(15, 58, 125, 0.45);
-        }
-
-        .btn-primary:hover::before {
-            left: 125%;
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: white;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-        }
-
-        .btn-secondary:hover {
-            background: var(--light-accent);
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 6px 18px rgba(15, 58, 125, 0.15);
-        }
-
-        /* Features Grid */
-        section {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 4rem 2rem;
-        }
-
-        section h2 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-            color: var(--primary);
-            text-align: center;
-        }
-
-        .section-subtitle {
-            text-align: center;
-            color: #6b7280;
-            font-size: 1.1rem;
-            max-width: 600px;
-            margin: 0 auto 3rem;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-            transition: transform 0.15s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-            border: 1px solid var(--border);
-            transform-style: preserve-3d;
-            will-change: transform;
-        }
-
-        .card:hover {
-            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
-            border-color: var(--accent);
-        }
-
-        .card-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--light-accent), #fff);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-            color: var(--accent);
-            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
-        }
-
-        .card:hover .card-icon {
-            transform: scale(1.15) rotate(-6deg);
-            box-shadow: 0 6px 16px rgba(0, 168, 232, 0.25);
-        }
-
-        .card h3 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: var(--dark);
-        }
-
-        .card p {
-            color: #6b7280;
-            line-height: 1.7;
-        }
-
-        /* Maturity Levels */
-        .maturity-levels {
-            background: white;
-            border-radius: 12px;
-            padding: 2rem;
-            margin-top: 2rem;
-        }
-
-        .level {
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-left: 4px solid var(--border);
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-            border-radius: 0 8px 8px 0;
-        }
-
-        .level:hover {
-            transform: translateX(6px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
-        }
-
-        .level:hover .level-badge {
-            animation: badgePulse 0.5s ease;
-        }
-
-        @keyframes badgePulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.15); }
-            100% { transform: scale(1); }
-        }
-
-        .level-1 { border-left-color: #ef4444; background: rgba(239, 68, 68, 0.02); }
-        .level-2 { border-left-color: #f59e0b; background: rgba(245, 158, 11, 0.02); }
-        .level-3 { border-left-color: #3b82f6; background: rgba(59, 130, 246, 0.02); }
-        .level-4 { border-left-color: #8b5cf6; background: rgba(139, 92, 246, 0.02); }
-        .level-5 { border-left-color: #10b981; background: rgba(16, 185, 129, 0.02); }
-
-        .level h4 {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .level-badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-right: 0.5rem;
-        }
-
-        .level-1 .level-badge { background: rgba(239, 68, 68, 0.2); color: #dc2626; }
-        .level-2 .level-badge { background: rgba(245, 158, 11, 0.2); color: #d97706; }
-        .level-3 .level-badge { background: rgba(59, 130, 246, 0.2); color: #2563eb; }
-        .level-4 .level-badge { background: rgba(139, 92, 246, 0.2); color: #7c3aed; }
-        .level-5 .level-badge { background: rgba(16, 185, 129, 0.2); color: #059669; }
-
-        .level p {
-            color: #6b7280;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Gap Assessment */
-        .gap-framework {
-            background: linear-gradient(135deg, var(--light-accent), white);
-            border-radius: 12px;
-            padding: 3rem;
-            margin-top: 2rem;
-        }
-
-        .gap-steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .step {
-            text-align: center;
-        }
-
-        .step {
-            transition: transform 0.3s ease;
-        }
-
-        .step:hover {
-            transform: translateY(-4px);
-        }
-
-        .step-number {
-            width: 50px;
-            height: 50px;
-            background: var(--primary);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin: 0 auto 1rem;
-            box-shadow: 0 0 0 0 rgba(15, 58, 125, 0.4);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
-        }
-
-        .step:hover .step-number {
-            transform: scale(1.12);
-            box-shadow: 0 0 0 8px rgba(15, 58, 125, 0.12);
-        }
-
-        .step h3 {
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--dark);
-        }
-
-        .step p {
-            color: #6b7280;
-            font-size: 0.95rem;
-        }
-
-        /* Benefits */
-        .benefits-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-
-        .benefit {
-            display: flex;
-            gap: 1.5rem;
-            transition: transform 0.3s ease;
-        }
-
-        .benefit:hover {
-            transform: translateX(4px);
-        }
-
-        .benefit-icon {
-            flex-shrink: 0;
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--accent), var(--secondary));
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.3rem;
-            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .benefit:hover .benefit-icon {
-            transform: scale(1.15) rotate(8deg);
-        }
-
-        .benefit-content h4 {
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--dark);
-        }
-
-        .benefit-content p {
-            color: #6b7280;
-            font-size: 0.95rem;
-        }
-
-        /* Comparison Table */
-        .comparison-table {
-            overflow-x: auto;
-            margin-top: 2rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        th {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 1.5rem;
-            text-align: left;
-            font-weight: 600;
-        }
-
-        td {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr {
-            transition: background 0.2s ease;
-        }
-
-        tr:hover {
-            background: var(--light);
-        }
-
-        /* CTA Section */
-        .cta-section {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            text-align: center;
-            padding: 4rem 2rem;
-            border-radius: 12px;
-            margin-top: 4rem;
-        }
-
-        .cta-section h2 {
-            color: white;
-            margin-bottom: 1.5rem;
-        }
-
-        .cta-section p {
-            font-size: 1.1rem;
-            max-width: 600px;
-            margin: 0 auto 2rem;
-            opacity: 0.95;
-        }
-
-        .btn-light {
-            background: white;
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        .btn-light:hover {
-            background: var(--light);
-            transform: translateY(-2px) scale(1.03);
-            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
-        }
-
-        /* Footer */
-        footer {
-            background: var(--dark);
-            color: white;
-            padding: 2rem;
-            text-align: center;
-            margin-top: 4rem;
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Scroll-reveal system: elements start hidden, JS adds .in-view via IntersectionObserver */
-        .reveal {
-            opacity: 0;
-            transform: translateY(24px);
-            transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        .reveal.in-view {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        /* Scroll progress bar */
-        .scroll-progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 3px;
-            width: 0%;
-            background: linear-gradient(90deg, var(--accent), var(--primary));
-            z-index: 1200;
-            transition: width 0.1s ease-out;
-        }
-
-        /* Nav interactivity */
-        nav {
-            transition: box-shadow 0.3s ease;
-        }
-
-        nav.scrolled {
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-        }
-
-        .nav-links a {
-            position: relative;
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            bottom: -4px;
-            width: 0;
-            height: 2px;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            transition: width 0.3s ease;
-        }
-
-        .nav-links a:hover::after,
-        .nav-links a.active::after {
-            width: 100%;
-        }
-
-        .nav-links a.active {
-            color: var(--accent);
-        }
-
-        /* Back to top button */
-        .back-to-top {
-            position: fixed;
-            bottom: 28px;
-            right: 28px;
-            width: 46px;
-            height: 46px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            color: white;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            box-shadow: 0 6px 20px rgba(15, 58, 125, 0.35);
-            opacity: 0;
-            transform: translateY(20px) scale(0.8);
-            pointer-events: none;
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            z-index: 999;
-        }
-
-        .back-to-top.visible {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            pointer-events: auto;
-        }
-
-        .back-to-top:hover {
-            transform: translateY(-4px) scale(1.08);
-        }
-
-        /* ---------------- Modal system ---------------- */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.55);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 1.5rem;
-            z-index: 1000;
-        }
-
-        .modal-overlay.open {
-            display: flex;
-        }
-
-        .modal {
-            background: white;
-            border-radius: 14px;
-            max-width: 640px;
-            width: 100%;
-            max-height: 88vh;
-            overflow-y: auto;
-            padding: 2rem;
-            position: relative;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: fadeInUp 0.25s ease-out;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: var(--light);
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            font-size: 1.1rem;
-            line-height: 1;
-            cursor: pointer;
-            color: var(--dark);
-        }
-
-        .modal h2 {
-            text-align: left;
-            font-size: 1.6rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .modal .section-subtitle {
-            text-align: left;
-            margin: 0 0 1.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.4rem;
-            font-size: 0.95rem;
-        }
-
-        .form-group input,
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-family: inherit;
-        }
-
-        .form-group input:focus,
-        .form-group textarea:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .form-error {
-            color: var(--danger);
-            font-size: 0.85rem;
-            margin-top: 0.4rem;
-            display: none;
-        }
-
-        .form-error.visible {
-            display: block;
-        }
-
-        .form-status {
-            margin-top: 1rem;
-            padding: 0.9rem 1rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            display: none;
-        }
-
-        .form-status.success {
-            display: block;
-            background: rgba(16, 185, 129, 0.1);
-            color: #047857;
-        }
-
-        .form-status.error {
-            display: block;
-            background: rgba(239, 68, 68, 0.1);
-            color: #b91c1c;
-        }
-
-        .quiz-progress {
-            height: 6px;
-            background: var(--border);
-            border-radius: 4px;
-            margin-bottom: 1.5rem;
-            overflow: hidden;
-        }
-
-        .quiz-progress-bar {
-            height: 100%;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .quiz-question {
-            font-weight: 700;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-        }
-
-        .quiz-options {
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-        }
-
-        .quiz-option {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            padding: 0.9rem 1rem;
-            border: 2px solid var(--border);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .quiz-option:hover {
-            border-color: var(--accent);
-            background: var(--light-accent);
-        }
-
-        .quiz-option.selected {
-            border-color: var(--primary);
-            background: var(--light-accent);
-            transform: scale(1.01);
-            box-shadow: 0 4px 12px rgba(15, 58, 125, 0.1);
-        }
-
-        .quiz-option:active {
-            transform: scale(0.98);
-        }
-
-        .quiz-option input {
-            margin-top: 0.2rem;
-        }
-
-        .quiz-nav {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 1.75rem;
-            gap: 1rem;
-        }
-
-        .results-level {
-            text-align: center;
-            padding: 1.5rem;
-            border-radius: 12px;
-            background: var(--light-accent);
-            margin-bottom: 1.5rem;
-        }
-
-        .results-level .level-name {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--primary);
-        }
-
-        .results-bar-row {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 0.9rem;
-        }
-
-        .results-bar-label {
-            width: 170px;
-            font-size: 0.88rem;
-            font-weight: 600;
-            flex-shrink: 0;
-        }
-
-        .results-bar-track {
-            flex: 1;
-            height: 10px;
-            background: var(--border);
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .results-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-
-        .results-bar-score {
-            width: 30px;
-            font-size: 0.85rem;
-            color: #6b7280;
-            text-align: right;
-            flex-shrink: 0;
-        }
-
-        .recommendation-item {
-            padding: 1rem;
-            border-left: 4px solid var(--accent);
-            background: var(--light);
-            border-radius: 0 8px 8px 0;
-            margin-bottom: 0.9rem;
-        }
-
-        .recommendation-item strong {
-            color: var(--primary);
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255,255,255,0.4);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
-            vertical-align: middle;
-            margin-right: 0.5rem;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2.5rem;
-            }
-
-            .nav-links {
-                gap: 1rem;
-                font-size: 0.9rem;
-            }
-
-            .grid {
-                grid-template-columns: 1fr;
-            }
-
-            .cta-buttons {
-                flex-direction: column;
-            }
-
-            button, .btn {
-                width: 100%;
-            }
-
-            section {
-                padding: 3rem 1.5rem;
-            }
-
-            .results-bar-label {
-                width: 110px;
-                font-size: 0.78rem;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KVH — AI-Powered Process Maturity & Compliance Assessments</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+    .hero {
+        max-width: 1400px; margin: 0 auto; padding: 6rem 2rem; text-align: center;
+        position: relative; overflow: hidden;
+    }
+    .hero::before {
+        content: ''; position: absolute; width: 600px; height: 600px;
+        background: radial-gradient(circle, rgba(0,168,232,0.1) 0%, transparent 70%);
+        border-radius: 50%; top: -200px; right: -200px; pointer-events: none;
+        animation: floatBlob 9s ease-in-out infinite;
+    }
+    .hero::after {
+        content: ''; position: absolute; width: 420px; height: 420px;
+        background: radial-gradient(circle, rgba(15,58,125,0.08) 0%, transparent 70%);
+        border-radius: 50%; bottom: -180px; left: -160px; pointer-events: none;
+        animation: floatBlob 11s ease-in-out infinite reverse;
+    }
+    @keyframes floatBlob { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(24px,-18px) scale(1.08); } }
+    .hero-content { position: relative; z-index: 1; }
+    h1 {
+        font-size: 3.2rem; font-weight: 900; margin-bottom: 1.5rem; line-height: 1.2;
+        background: linear-gradient(120deg, var(--primary), var(--accent), var(--secondary), var(--primary));
+        background-size: 300% 300%; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-clip: text; animation: gradientShift 8s ease infinite;
+    }
+    @keyframes gradientShift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    .subtitle { font-size: 1.2rem; color: var(--muted); max-width: 700px; margin: 0 auto 2.5rem; }
+    .cta-buttons { display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 1rem; flex-wrap: wrap; }
+    .cta-hint { color: var(--muted); font-size: 0.85rem; margin-top: 0.75rem; }
+
+    .stats-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; }
+    .stat-box { text-align: center; padding: 1.5rem; }
+    .stat-box .num { font-size: 2.4rem; font-weight: 800; color: var(--primary); }
+    .stat-box .label { color: var(--muted); font-size: 0.95rem; margin-top: 0.4rem; }
+
+    .step { text-align: center; transition: transform 0.3s ease; }
+    .step:hover { transform: translateY(-4px); }
+    .step-number {
+        width: 50px; height: 50px; background: var(--primary); color: white; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 700;
+        margin: 0 auto 1rem; transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
+    }
+    .step:hover .step-number { transform: scale(1.12); box-shadow: 0 0 0 8px rgba(15,58,125,0.12); }
+
+    .testimonial { padding: 1.75rem; }
+    .testimonial p { color: var(--dark); font-style: italic; margin-bottom: 1rem; }
+    .testimonial .who { font-weight: 700; color: var(--primary); font-size: 0.92rem; }
+    .testimonial .role { color: var(--muted); font-size: 0.85rem; }
+
+    .faq-item { border-bottom: 1px solid var(--border); padding: 1.25rem 0; }
+    .faq-question { display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 700; }
+    .faq-answer { color: var(--muted); margin-top: 0.75rem; display: none; }
+    .faq-item.open .faq-answer { display: block; }
+    .faq-item.open .faq-caret { transform: rotate(180deg); }
+    .faq-caret { transition: transform 0.2s ease; }
+
+    .cta-section {
+        background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; text-align: center;
+        padding: 4rem 2rem; border-radius: 12px; margin-top: 2rem;
+    }
+    .cta-section h2 { color: white; }
+</style>
 </head>
 <body>
-    <div class="scroll-progress" id="scrollProgress"></div>
+<div class="scroll-progress" id="scrollProgress"></div>
 
-    <!-- Navigation -->
-    <nav id="mainNav">
-        <div class="nav-container">
-            <div class="logo">📊 MaturityAssess</div>
-            <ul class="nav-links">
-                <li><a href="#approaches">Approaches</a></li>
-                <li><a href="#maturity">Maturity Levels</a></li>
-                <li><a href="#gap-assessment">Gap Assessment</a></li>
-                <li><a href="#benefits">Benefits</a></li>
-            </ul>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <div class="hero">
-        <div class="hero-content">
-            <h1>Transform Your Processes Through Maturity Assessment</h1>
-            <p class="subtitle">Systematically evaluate your current state, identify gaps, and achieve operational excellence through structured assessment frameworks</p>
-            <div class="cta-buttons">
-                <button class="btn btn-primary" id="startAssessmentBtn">Start Assessment</button>
-                <button class="btn btn-secondary" id="learnMoreBtn">Learn More</button>
+<nav id="mainNav">
+    <div class="nav-container">
+        <a href="/" class="logo">🛡️ KVH</a>
+        <div class="nav-group">
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-btn">Industries <span class="caret">▾</span></button>
+                <div class="nav-dropdown-menu" id="navIndustryMenu"><span class="menu-group-label">Loading…</span></div>
             </div>
-        </div>
-    </div>
-
-    <!-- Approaches Section -->
-    <section id="approaches">
-        <h2>Assessment Approaches</h2>
-        <p class="section-subtitle">Choose the methodology that best fits your organizational needs</p>
-
-        <div class="grid">
-            <div class="card" data-approach="self-assessment">
-                <div class="card-icon">📋</div>
-                <h3>Self-Assessment</h3>
-                <p>Internal teams evaluate their own processes using standardized questionnaires and frameworks. Cost-effective and quick, ideal for continuous improvement initiatives.</p>
-            </div>
-
-            <div class="card" data-approach="facilitated-assessment">
-                <div class="card-icon">👥</div>
-                <h3>Facilitated Assessment</h3>
-                <p>External facilitators work with your teams to objectively evaluate processes. Combines expert insights with organizational knowledge for balanced results.</p>
-            </div>
-
-            <div class="card" data-approach="audit-based-assessment">
-                <div class="card-icon">🔍</div>
-                <h3>Audit-Based Assessment</h3>
-                <p>Comprehensive examination of process documentation, controls, and execution. Provides high-confidence results with detailed evidence collection.</p>
-            </div>
-
-            <div class="card" data-approach="benchmark-comparison">
-                <div class="card-icon">📈</div>
-                <h3>Benchmark Comparison</h3>
-                <p>Compare your maturity levels against industry standards and peer organizations. Gain competitive insights and identify best practice opportunities.</p>
-            </div>
-
-            <div class="card" data-approach="process-simulation">
-                <div class="card-icon">🎯</div>
-                <h3>Process Simulation</h3>
-                <p>Model current and target states through process simulation. Test improvement scenarios before implementation to validate effectiveness.</p>
-            </div>
-
-            <div class="card" data-approach="data-driven-analysis">
-                <div class="card-icon">📊</div>
-                <h3>Data-Driven Analysis</h3>
-                <p>Leverage operational metrics and KPIs to assess maturity objectively. Combines quantitative data with qualitative evaluation for comprehensive insight.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Maturity Levels Section -->
-    <section id="maturity">
-        <h2>Maturity Level Framework</h2>
-        <p class="section-subtitle">Five-tier progression model for process excellence</p>
-
-        <div class="maturity-levels">
-            <div class="level level-1">
-                <h4><span class="level-badge">Level 1</span>Initial/Ad Hoc</h4>
-                <p><strong>Characteristics:</strong> Processes are unpredictable, poorly controlled, and reactive. Success depends on individual heroics.</p>
-                <p><strong>Key Indicators:</strong> Inconsistent results, lack of documentation, informal procedures, high rework.</p>
-            </div>
-
-            <div class="level level-2">
-                <h4><span class="level-badge">Level 2</span>Repeatable/Managed</h4>
-                <p><strong>Characteristics:</strong> Some processes are established with basic discipline. Requirements are captured and tracked.</p>
-                <p><strong>Key Indicators:</strong> Standard procedures documented, basic project management, some metrics collection, cost and schedule management.</p>
-            </div>
-
-            <div class="level level-3">
-                <h4><span class="level-badge">Level 3</span>Defined/Standardized</h4>
-                <p><strong>Characteristics:</strong> Processes are documented, standardized, and proactively managed. Organization-wide standards exist.</p>
-                <p><strong>Key Indicators:</strong> Process standards documented, tailoring guidelines, process training, process assurance activities, continuous monitoring.</p>
-            </div>
-
-            <div class="level level-4">
-                <h4><span class="level-badge">Level 4</span>Quantitatively Managed</h4>
-                <p><strong>Characteristics:</strong> Processes are measured and controlled quantitatively. Significant variation is understood and managed.</p>
-                <p><strong>Key Indicators:</strong> Statistical process control, quantitative process management, detailed metrics and analysis, performance baselines.</p>
-            </div>
-
-            <div class="level level-5">
-                <h4><span class="level-badge">Level 5</span>Optimizing</h4>
-                <p><strong>Characteristics:</strong> Focus on continuous process improvement and innovation. Organization proactively optimizes its processes.</p>
-                <p><strong>Key Indicators:</strong> Continuous improvement culture, pilot innovations, rapid deployment of new technologies, optimization metrics.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Gap Assessment Section -->
-    <section id="gap-assessment">
-        <h2>Gap Assessment Framework</h2>
-        <p class="section-subtitle">Structured methodology to identify and address process improvements</p>
-
-        <div class="gap-framework">
-            <h3 style="text-align: center; color: var(--primary); margin-bottom: 2rem;">The Gap Assessment Process</h3>
-
-            <div class="gap-steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <h3>Define Current State</h3>
-                    <p>Assess the existing maturity of your processes through interviews, document review, and observation.</p>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <h3>Establish Target State</h3>
-                    <p>Define desired maturity levels based on strategic goals, industry standards, and organizational capability.</p>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <h3>Identify Gaps</h3>
-                    <p>Compare current and target states to pinpoint specific areas requiring improvement and prioritize them.</p>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">4</div>
-                    <h3>Root Cause Analysis</h3>
-                    <p>Investigate underlying causes of gaps using frameworks like 5-Why, fishbone analysis, or capability mapping.</p>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">5</div>
-                    <h3>Develop Roadmap</h3>
-                    <p>Create a prioritized action plan with timelines, resources, ownership, and success metrics.</p>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">6</div>
-                    <h3>Monitor & Sustain</h3>
-                    <p>Track progress through KPIs, conduct follow-up assessments, and refine the roadmap based on results.</p>
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-btn">Learn More <span class="caret">▾</span></button>
+                <div class="nav-dropdown-menu">
+                    <a href="/learn/cmm.html">What is CMM?</a>
+                    <a href="/learn/iso.html">ISO Assessments</a>
+                    <a href="/learn/security.html">Security Assessments</a>
+                    <a href="/learn/process-maturity.html">Process Maturity Assessments</a>
+                    <a href="/learn/compliance.html">Compliance Assessments</a>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Benefits Section -->
-    <section id="benefits">
-        <h2>Key Benefits</h2>
-        <p class="section-subtitle">Realize tangible improvements across your organization</p>
-
-        <div class="benefits-list">
-            <div class="benefit">
-                <div class="benefit-icon">📈</div>
-                <div class="benefit-content">
-                    <h4>Operational Efficiency</h4>
-                    <p>Eliminate waste, reduce cycle times, and streamline workflows through systematic process improvement.</p>
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-btn">Connect With Us <span class="caret">▾</span></button>
+                <div class="nav-dropdown-menu">
+                    <a href="/connect#schedule">Schedule a 15-min Consultation</a>
+                    <a href="/connect#contact">Contact / Email Us</a>
                 </div>
             </div>
-
-            <div class="benefit">
-                <div class="benefit-icon">💰</div>
-                <div class="benefit-content">
-                    <h4>Cost Reduction</h4>
-                    <p>Identify cost drivers, eliminate rework, and optimize resource utilization for significant savings.</p>
-                </div>
-            </div>
-
-            <div class="benefit">
-                <div class="benefit-icon">✅</div>
-                <div class="benefit-content">
-                    <h4>Quality Improvement</h4>
-                    <p>Standardize practices, reduce errors, and improve consistency in process execution and outcomes.</p>
-                </div>
-            </div>
-
-            <div class="benefit">
-                <div class="benefit-icon">👨‍💼</div>
-                <div class="benefit-content">
-                    <h4>Employee Empowerment</h4>
-                    <p>Clear processes and standards reduce confusion, improve confidence, and enable better decision-making.</p>
-                </div>
-            </div>
-
-            <div class="benefit">
-                <div class="benefit-icon">🎯</div>
-                <div class="benefit-content">
-                    <h4>Strategic Alignment</h4>
-                    <p>Ensure processes support business strategy and enable faster execution of strategic initiatives.</p>
-                </div>
-            </div>
-
-            <div class="benefit">
-                <div class="benefit-icon">📊</div>
-                <div class="benefit-content">
-                    <h4>Data-Driven Decisions</h4>
-                    <p>Establish metrics and dashboards to monitor performance and make informed optimization decisions.</p>
-                </div>
-            </div>
-
-            <div class="benefit">
-                <div class="benefit-icon">🔄</div>
-                <div class="benefit-content">
-                    <h4>Continuous Improvement</h4>
-                    <p>Build a culture of ongoing process refinement and innovation for sustained competitive advantage.</p>
-                </div>
-            </div>
-
-            <div class="benefit">
-                <div class="benefit-icon">🏆</div>
-                <div class="benefit-content">
-                    <h4>Competitive Edge</h4>
-                    <p>Achieve operational excellence and build capabilities that differentiate you in the marketplace.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Comparison Section -->
-    <section>
-        <h2>Quick Comparison: Current vs. Future State</h2>
-        <p class="section-subtitle">How your organization transforms through maturity assessment</p>
-
-        <div class="comparison-table">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Aspect</th>
-                        <th>Current State (Lower Maturity)</th>
-                        <th>Future State (Higher Maturity)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Process Documentation</strong></td>
-                        <td>Informal, inconsistent, scattered</td>
-                        <td>Standardized, centralized, regularly updated</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Quality & Compliance</strong></td>
-                        <td>Reactive, variable, audit-driven</td>
-                        <td>Proactive, consistent, continuously monitored</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Performance Metrics</strong></td>
-                        <td>Limited visibility, manual tracking</td>
-                        <td>Comprehensive dashboards, real-time monitoring</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Decision Making</strong></td>
-                        <td>Intuition-based, inconsistent criteria</td>
-                        <td>Data-driven, evidence-based, transparent</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Risk Management</strong></td>
-                        <td>Ad hoc, reactive responses</td>
-                        <td>Systematic, preventive, controlled environment</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Resource Allocation</strong></td>
-                        <td>Firefighting, unplanned effort</td>
-                        <td>Optimized, planned, capacity-based</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Employee Capability</strong></td>
-                        <td>Inconsistent skills, on-the-job learning</td>
-                        <td>Standardized training, competency-based</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Innovation</strong></td>
-                        <td>Limited, bottom-up, sporadic</td>
-                        <td>Systematic, embedded in culture, continuous</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section class="cta-section" id="contact">
-        <h2>Ready to Transform Your Processes?</h2>
-        <p>Take the first step toward operational excellence. Start your process maturity assessment today and unlock significant improvements across your organization.</p>
-        <button class="btn btn-light" id="requestAssessmentBtn">Request Assessment</button>
-    </section>
-
-    <!-- Footer -->
-    <footer>
-        <p>&copy; 2024 MaturityAssess Platform. Empowering organizations through process excellence.</p>
-        <p style="margin-top: 1rem; opacity: 0.7; font-size: 0.9rem;">Helping businesses achieve operational maturity since 2020</p>
-    </footer>
-
-    <!-- ===================== Assessment Modal ===================== -->
-    <div class="modal-overlay" id="assessmentModal">
-        <div class="modal">
-            <button class="modal-close" data-close="assessmentModal">&times;</button>
-            <div id="assessmentModalBody">
-                <!-- populated by JS -->
-            </div>
+            <a href="/assessment" class="btn btn-primary btn-sm">Start Assessment</a>
         </div>
     </div>
+</nav>
 
-    <!-- Back to top -->
-    <button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
+<div class="hero">
+    <div class="hero-content">
+        <h1>Measure Your Organization's Capability Maturity With AI-Powered Assessments</h1>
+        <p class="subtitle">Pick your industry and standard, answer AI-generated questions, and get an enterprise-grade scorecard and downloadable report — powered by Claude.</p>
+        <div class="cta-buttons">
+            <a href="/assessment" class="btn btn-primary">Start Your Assessment</a>
+            <a href="/assessment#upload" class="btn btn-secondary">Upload Existing Documents</a>
+        </div>
+        <p class="cta-hint">Free scorecard in minutes · Full AI report available (2 free per day)</p>
+    </div>
+</div>
 
-    <!-- ===================== Lead / Request Assessment Modal ===================== -->
-    <div class="modal-overlay" id="leadModal">
-        <div class="modal">
-            <button class="modal-close" data-close="leadModal">&times;</button>
-            <h2>Request an Assessment</h2>
-            <p class="section-subtitle" style="margin-bottom:1.5rem;">Tell us a bit about your organization and we'll follow up shortly.</p>
+<section id="stats">
+    <div class="stats-strip">
+        <div class="card stat-box"><div class="num">8+</div><div class="label">Industries supported</div></div>
+        <div class="card stat-box"><div class="num">20+</div><div class="label">Standards &amp; frameworks</div></div>
+        <div class="card stat-box"><div class="num">AI</div><div class="label">Generated questions &amp; scoring</div></div>
+        <div class="card stat-box"><div class="num">.docx</div><div class="label">Downloadable report</div></div>
+    </div>
+</section>
 
-            <form id="leadForm">
-                <div class="form-group">
-                    <label for="leadName">Full Name *</label>
-                    <input type="text" id="leadName" name="name" required maxlength="200" />
-                </div>
-                <div class="form-group">
-                    <label for="leadEmail">Work Email *</label>
-                    <input type="email" id="leadEmail" name="email" required maxlength="200" />
-                </div>
-                <div class="form-group">
-                    <label for="leadCompany">Company</label>
-                    <input type="text" id="leadCompany" name="company" maxlength="200" />
-                </div>
-                <div class="form-group">
-                    <label for="leadMessage">What would you like to assess?</label>
-                    <textarea id="leadMessage" name="message" rows="4" maxlength="2000"></textarea>
-                </div>
-                <div class="form-error" id="leadFormError"></div>
-                <div class="form-status" id="leadFormStatus"></div>
-                <button type="submit" class="btn btn-primary" id="leadSubmitBtn" style="width:100%;">Submit Request</button>
-            </form>
+<section id="how-it-works">
+    <h2>How It Works</h2>
+    <p class="section-subtitle">From industry selection to a downloadable report in four steps.</p>
+    <div class="grid">
+        <div class="step">
+            <div class="step-number">1</div>
+            <h3>Choose Industry</h3>
+            <p>Healthcare, Financial Services, Manufacturing, Technology, and more.</p>
+        </div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <h3>Choose Standard</h3>
+            <p>HIPAA, SOC 2, ISO 27001, CMMI, PCI DSS, and other frameworks per industry.</p>
+        </div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <h3>Answer AI Questions</h3>
+            <p>Claude generates questions tailored to your industry and standard.</p>
+        </div>
+        <div class="step">
+            <div class="step-number">4</div>
+            <h3>Get Your Scorecard</h3>
+            <p>Overall score, maturity level, compliance %, risk rating, and a roadmap.</p>
         </div>
     </div>
+</section>
 
-    <script>
-        const API_BASE = '/api';
+<section id="testimonials">
+    <h2>What Teams Are Saying</h2>
+    <p class="section-subtitle">Early feedback from teams piloting the platform.</p>
+    <div class="grid">
+        <div class="card testimonial">
+            <p>"The AI-generated questions actually matched our SOC 2 scope — far more relevant than a generic checklist."</p>
+            <div class="who">Director of Engineering</div>
+            <div class="role">Software & Technology</div>
+        </div>
+        <div class="card testimonial">
+            <p>"We used the 90-day roadmap almost verbatim as our internal action plan."</p>
+            <div class="who">Compliance Manager</div>
+            <div class="role">Financial Services</div>
+        </div>
+        <div class="card testimonial">
+            <p>"Fast, specific, and the downloadable report looked genuinely presentable to leadership."</p>
+            <div class="who">Quality Systems Lead</div>
+            <div class="role">Manufacturing</div>
+        </div>
+    </div>
+</section>
 
-        /* ---------------- Generic modal helpers ---------------- */
-        function openModal(id) {
-            document.getElementById(id).classList.add('open');
-            document.body.style.overflow = 'hidden';
-        }
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('open');
-            document.body.style.overflow = '';
-        }
-        document.querySelectorAll('[data-close]').forEach((btn) => {
-            btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
-        });
-        document.querySelectorAll('.modal-overlay').forEach((overlay) => {
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) closeModal(overlay.id);
-            });
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.modal-overlay.open').forEach((o) => closeModal(o.id));
-            }
-        });
+<section id="faq" class="section-narrow">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-list">
+        <div class="faq-item">
+            <div class="faq-question">Is the assessment free? <span class="faq-caret">▾</span></div>
+            <div class="faq-answer">Yes — the free tier gives you an instant scorecard. The full AI-written report with a downloadable .docx is also free right now, capped at 2 per day per email while we're in early access.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">How are the questions generated? <span class="faq-caret">▾</span></div>
+            <div class="faq-answer">Claude generates a question set specific to your chosen industry and standard — not a generic questionnaire.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">Can I upload existing policy documents instead? <span class="faq-caret">▾</span></div>
+            <div class="faq-answer">Document upload &amp; analysis is coming soon. For now, the question-based assessment covers the same ground.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">Who can see my results? <span class="faq-caret">▾</span></div>
+            <div class="faq-answer">Only you — results are retrievable by the link/ID from your session and the email you provide, not published anywhere.</div>
+        </div>
+    </div>
+</section>
 
-        /* ---------------- Smooth scroll for nav links ---------------- */
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            });
-        });
+<section>
+    <div class="cta-section">
+        <h2>Ready to See Where You Stand?</h2>
+        <p style="max-width:600px;margin:0 auto 2rem;opacity:0.95;">Start a free assessment now, or talk to us about a facilitated, expert-led assessment for your organization.</p>
+        <div class="cta-buttons">
+            <a href="/assessment" class="btn btn-light">Start Your Assessment</a>
+            <a href="/connect" class="btn btn-secondary" style="background:transparent;border-color:white;color:white;">Talk to an Expert</a>
+        </div>
+    </div>
+</section>
 
-        /* ---------------- Learn More button ---------------- */
-        document.getElementById('learnMoreBtn').addEventListener('click', () => {
-            document.getElementById('approaches').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
+<footer>
+    <p>&copy; 2026 KVH Assessment Platform. AI-powered maturity &amp; compliance assessments.</p>
+    <p style="margin-top:1rem;opacity:0.7;font-size:0.9rem;">
+        <a href="/">Home</a> · <a href="/assessment">Start Assessment</a> · <a href="/connect">Connect With Us</a> · <a href="/dashboard">Dashboard</a>
+    </p>
+</footer>
+<button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
 
-        /* ================= Start Assessment flow ================= */
-        const startAssessmentBtn = document.getElementById('startAssessmentBtn');
-        const assessmentModalBody = document.getElementById('assessmentModalBody');
-
-        let quizState = {
-            sessionId: null,
-            categories: [],
-            currentIndex: 0,
-            answers: {},
-        };
-
-        // Let clicking an approach card also kick off the assessment with that approach pre-selected.
-        document.querySelectorAll('.card[data-approach]').forEach((card) => {
-            card.style.cursor = 'pointer';
-            card.addEventListener('click', () => startAssessment(card.getAttribute('data-approach')));
-        });
-
-        startAssessmentBtn.addEventListener('click', () => startAssessment('self-assessment'));
-
-        async function startAssessment(approach) {
-            renderLoading('Setting up your assessment...');
-            openModal('assessmentModal');
-            try {
-                const res = await fetch(`${API_BASE}/assessment/start`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ approach }),
-                });
-                const data = await res.json();
-                if (!res.ok || !data.ok) throw new Error((data.errors && data.errors[0]) || 'Could not start assessment.');
-
-                quizState = {
-                    sessionId: data.sessionId,
-                    categories: data.categories,
-                    currentIndex: 0,
-                    answers: {},
-                };
-                renderQuizStep();
-            } catch (err) {
-                renderError(err.message);
-            }
-        }
-
-        function renderLoading(text) {
-            assessmentModalBody.innerHTML = `
-                <h2>Process Maturity Assessment</h2>
-                <p class="section-subtitle" style="text-align:left;">${escapeHtml(text)}</p>
-            `;
-        }
-
-        function renderError(message) {
-            assessmentModalBody.innerHTML = `
-                <h2>Something went wrong</h2>
-                <p class="form-error visible">${escapeHtml(message)}</p>
-                <button class="btn btn-primary" id="retryAssessmentBtn" style="margin-top:1rem;">Try Again</button>
-            `;
-            document.getElementById('retryAssessmentBtn').addEventListener('click', () => startAssessment('self-assessment'));
-        }
-
-        function renderQuizStep() {
-            const { categories, currentIndex, answers } = quizState;
-            const cat = categories[currentIndex];
-            const progress = Math.round((currentIndex / categories.length) * 100);
-            const selected = answers[cat.id];
-
-            assessmentModalBody.innerHTML = `
-                <h2>Process Maturity Assessment</h2>
-                <p class="section-subtitle" style="text-align:left;">Question ${currentIndex + 1} of ${categories.length} &middot; ${escapeHtml(cat.label)}</p>
-                <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${progress}%;"></div></div>
-                <div class="quiz-question">${escapeHtml(cat.question)}</div>
-                <div class="quiz-options">
-                    ${cat.options.map(opt => `
-                        <label class="quiz-option ${selected === opt.value ? 'selected' : ''}" data-value="${opt.value}">
-                            <input type="radio" name="quiz-option" value="${opt.value}" ${selected === opt.value ? 'checked' : ''} />
-                            <span>${escapeHtml(opt.label)}</span>
-                        </label>
-                    `).join('')}
-                </div>
-                <div class="quiz-nav">
-                    <button class="btn btn-secondary" id="quizBackBtn" ${currentIndex === 0 ? 'disabled' : ''}>Back</button>
-                    <button class="btn btn-primary" id="quizNextBtn" ${selected === undefined ? 'disabled' : ''}>
-                        ${currentIndex === categories.length - 1 ? 'See Results' : 'Next'}
-                    </button>
-                </div>
-            `;
-
-            assessmentModalBody.querySelectorAll('.quiz-option').forEach((label) => {
-                label.addEventListener('click', () => {
-                    const value = Number(label.getAttribute('data-value'));
-                    quizState.answers[cat.id] = value;
-                    renderQuizStep();
-                });
-            });
-
-            document.getElementById('quizBackBtn').addEventListener('click', () => {
-                quizState.currentIndex = Math.max(0, currentIndex - 1);
-                renderQuizStep();
-            });
-
-            document.getElementById('quizNextBtn').addEventListener('click', () => {
-                if (selected === undefined) return;
-                if (currentIndex < categories.length - 1) {
-                    quizState.currentIndex += 1;
-                    renderQuizStep();
-                } else {
-                    submitAssessment();
-                }
-            });
-        }
-
-        async function submitAssessment() {
-            renderLoading('Calculating your maturity score...');
-            try {
-                const res = await fetch(`${API_BASE}/assessment/submit`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sessionId: quizState.sessionId, answers: quizState.answers }),
-                });
-                const data = await res.json();
-                if (!res.ok || !data.ok) throw new Error((data.errors && data.errors[0]) || 'Could not score assessment.');
-                renderResults(data.result);
-            } catch (err) {
-                renderError(err.message);
-            }
-        }
-
-        function renderResults(result) {
-            const barsHtml = result.categories.map(c => `
-                <div class="results-bar-row">
-                    <div class="results-bar-label">${escapeHtml(c.label)}</div>
-                    <div class="results-bar-track">
-                        <div class="results-bar-fill" data-target="${(c.score / 5) * 100}%"></div>
-                    </div>
-                    <div class="results-bar-score">${c.score}/5</div>
-                </div>
-            `).join('');
-
-            const recsHtml = result.recommendations.map(r => `
-                <div class="recommendation-item">
-                    <strong>${escapeHtml(r.category)}</strong> — ${escapeHtml(r.recommendation)}
-                </div>
-            `).join('') || '<p>No major gaps found — great work!</p>';
-
-            assessmentModalBody.innerHTML = `
-                <h2>Your Results</h2>
-                <div class="results-level">
-                    <div class="level-name">Level ${result.overallLevel.level}: ${escapeHtml(result.overallLevel.name)}</div>
-                    <p style="margin-top:0.5rem; color:#6b7280;">${escapeHtml(result.overallLevel.description)}</p>
-                    <p style="margin-top:0.5rem; font-weight:600;">Overall score: ${result.overallScore} / 5</p>
-                </div>
-
-                <h3 style="margin-bottom:1rem; font-size:1.1rem;">Score by Category</h3>
-                ${barsHtml}
-
-                <h3 style="margin:1.5rem 0 1rem; font-size:1.1rem;">Top Recommendations</h3>
-                ${recsHtml}
-
-                <div class="quiz-nav" style="margin-top:1.5rem;">
-                    <button class="btn btn-secondary" id="retakeBtn">Retake Assessment</button>
-                    <button class="btn btn-primary" id="requestFollowUpBtn">Talk to an Expert</button>
-                </div>
-            `;
-
-            document.getElementById('retakeBtn').addEventListener('click', () => startAssessment('self-assessment'));
-            document.getElementById('requestFollowUpBtn').addEventListener('click', () => {
-                closeModal('assessmentModal');
-                openModal('leadModal');
-                document.getElementById('leadMessage').value =
-                    `Following up on my maturity assessment (Level ${result.overallLevel.level}: ${result.overallLevel.name}). I'd like to discuss next steps.`;
-            });
-        }
-
-        /* ================= Request Assessment (lead form) ================= */
-        document.getElementById('requestAssessmentBtn').addEventListener('click', () => {
-            openModal('leadModal');
-        });
-
-        const leadForm = document.getElementById('leadForm');
-        const leadFormError = document.getElementById('leadFormError');
-        const leadFormStatus = document.getElementById('leadFormStatus');
-        const leadSubmitBtn = document.getElementById('leadSubmitBtn');
-
-        leadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            leadFormError.classList.remove('visible');
-            leadFormStatus.className = 'form-status';
-
-            const payload = {
-                name: document.getElementById('leadName').value.trim(),
-                email: document.getElementById('leadEmail').value.trim(),
-                company: document.getElementById('leadCompany').value.trim(),
-                message: document.getElementById('leadMessage').value.trim(),
-                source: 'request-assessment-button',
-            };
-
-            leadSubmitBtn.disabled = true;
-            leadSubmitBtn.innerHTML = '<span class="spinner"></span> Submitting...';
-
-            try {
-                const res = await fetch(`${API_BASE}/leads`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-                const data = await res.json();
-
-                if (!res.ok || !data.ok) {
-                    throw new Error((data.errors && data.errors.join(' ')) || 'Something went wrong.');
-                }
-
-                leadFormStatus.textContent = data.message;
-                leadFormStatus.className = 'form-status success';
-                leadForm.reset();
-                setTimeout(() => closeModal('leadModal'), 1800);
-            } catch (err) {
-                leadFormError.textContent = err.message;
-                leadFormError.classList.add('visible');
-            } finally {
-                leadSubmitBtn.disabled = false;
-                leadSubmitBtn.textContent = 'Submit Request';
-            }
-        });
-
-        /* ---------------- utils ---------------- */
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str == null ? '' : String(str);
-            return div.innerHTML;
-        }
-
-        /* ================= Interactive polish ================= */
-
-        // Button ripple effect
-        function attachRipple(btn) {
-            btn.addEventListener('click', (e) => {
-                const rect = btn.getBoundingClientRect();
-                const size = Math.max(rect.width, rect.height);
-                const ripple = document.createElement('span');
-                ripple.className = 'ripple';
-                ripple.style.width = ripple.style.height = `${size}px`;
-                ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
-                ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
-                ripple.style.background = btn.classList.contains('btn-secondary')
-                    ? 'rgba(15, 58, 125, 0.18)'
-                    : 'rgba(255, 255, 255, 0.5)';
-                btn.appendChild(ripple);
-                ripple.addEventListener('animationend', () => ripple.remove());
-            });
-        }
-        function attachRippleToAll() {
-            document.querySelectorAll('button, .btn').forEach((btn) => {
-                if (!btn.dataset.rippleBound) {
-                    btn.dataset.rippleBound = '1';
-                    attachRipple(btn);
-                }
-            });
-        }
-        attachRippleToAll();
-        // Re-bind whenever modal content is re-rendered with new buttons
-        new MutationObserver(attachRippleToAll).observe(document.body, { childList: true, subtree: true });
-
-        // 3D tilt on approach cards
-        document.querySelectorAll('.card').forEach((card) => {
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                const rotateX = ((y / rect.height) - 0.5) * -8;
-                const rotateY = ((x / rect.width) - 0.5) * 8;
-                card.style.transform = `perspective(700px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
-            });
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = '';
-            });
-        });
-
-        // Scroll-reveal via IntersectionObserver
-        const revealTargets = document.querySelectorAll(
-            '.card, .level, .step, .benefit, .comparison-table, section > h2, section > .section-subtitle'
-        );
-        revealTargets.forEach((el, i) => {
-            el.classList.add('reveal');
-            el.style.transitionDelay = `${(i % 6) * 0.07}s`;
-        });
-        const revealObserver = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('in-view');
-                    revealObserver.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-        revealTargets.forEach((el) => revealObserver.observe(el));
-
-        // Scroll progress bar + nav shadow + active link highlighting
-        const scrollProgress = document.getElementById('scrollProgress');
-        const mainNav = document.getElementById('mainNav');
-        const navLinks = document.querySelectorAll('.nav-links a[href^="#"]');
-        const navSections = Array.from(navLinks)
-            .map((a) => document.querySelector(a.getAttribute('href')))
-            .filter(Boolean);
-        const backToTop = document.getElementById('backToTop');
-
-        function onScroll() {
-            const scrollTop = window.scrollY;
-            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            scrollProgress.style.width = docHeight > 0 ? `${(scrollTop / docHeight) * 100}%` : '0%';
-
-            mainNav.classList.toggle('scrolled', scrollTop > 10);
-            backToTop.classList.toggle('visible', scrollTop > 500);
-
-            let activeIndex = -1;
-            navSections.forEach((section, i) => {
-                if (section.getBoundingClientRect().top <= 120) activeIndex = i;
-            });
-            navLinks.forEach((a, i) => a.classList.toggle('active', i === activeIndex));
-        }
-        window.addEventListener('scroll', onScroll, { passive: true });
-        onScroll();
-
-        backToTop.addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-
-        // Animate results bars growing in once they're rendered into the DOM
-        const resultsBarsObserver = new MutationObserver(() => {
-            const fills = assessmentModalBody.querySelectorAll('.results-bar-fill[data-target]');
-            fills.forEach((fill, i) => {
-                setTimeout(() => {
-                    fill.style.width = fill.getAttribute('data-target');
-                }, 50 + i * 60);
-            });
-        });
-        resultsBarsObserver.observe(assessmentModalBody, { childList: true, subtree: true });
-    </script>
+<script>
+    document.querySelectorAll('.faq-question').forEach((q) => {
+        q.addEventListener('click', () => q.parentElement.classList.toggle('open'));
+    });
+</script>
+<script src="/app.js"></script>
 </body>
 </html>

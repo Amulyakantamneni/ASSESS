@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Start Your Assessment — KVH</title>
+<link rel="stylesheet" href="/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+    .flow-wrap { max-width: 900px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+
+    .stepper { display: flex; justify-content: space-between; margin-bottom: 3rem; flex-wrap: wrap; gap: 0.5rem; }
+    .stepper .step-pill {
+        flex: 1; min-width: 140px; text-align: center; padding: 0.75rem 0.5rem; border-radius: 8px;
+        font-size: 0.85rem; font-weight: 600; color: var(--muted); background: white; border: 1px solid var(--border);
+        transition: all 0.3s ease;
+    }
+    .stepper .step-pill.active { color: var(--primary); border-color: var(--accent); background: var(--light-accent); }
+    .stepper .step-pill.done { color: white; background: var(--success); border-color: var(--success); }
+
+    .panel { background: white; border-radius: 14px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid var(--border); }
+    .panel h2 { color: var(--primary); margin-bottom: 0.5rem; font-size: 1.6rem; }
+    .panel .hint { color: var(--muted); margin-bottom: 1.75rem; }
+
+    .choice-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+    .choice-card {
+        border: 2px solid var(--border); border-radius: 10px; padding: 1.25rem; cursor: pointer;
+        transition: all 0.2s ease; background: white;
+    }
+    .choice-card:hover { border-color: var(--accent); background: var(--light-accent); transform: translateY(-2px); }
+    .choice-card h4 { color: var(--dark); margin-bottom: 0.4rem; font-size: 1rem; }
+    .choice-card p { color: var(--muted); font-size: 0.85rem; }
+
+    .tier-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
+    @media (max-width: 640px) { .tier-grid { grid-template-columns: 1fr; } }
+    .tier-card { border: 2px solid var(--border); border-radius: 12px; padding: 1.5rem; cursor: pointer; transition: all 0.2s ease; }
+    .tier-card.selected { border-color: var(--primary); background: var(--light-accent); }
+    .tier-card h4 { color: var(--primary); margin-bottom: 0.5rem; }
+    .tier-card ul { margin: 0.75rem 0 0 1.1rem; color: var(--muted); font-size: 0.88rem; }
+
+    .quiz-progress { height: 6px; background: var(--border); border-radius: 4px; margin-bottom: 1.5rem; overflow: hidden; }
+    .quiz-progress-bar { height: 100%; background: linear-gradient(135deg, var(--primary), var(--accent)); width: 0%; transition: width 0.3s ease; }
+    .quiz-question { font-weight: 700; margin-bottom: 0.4rem; font-size: 1.15rem; }
+    .quiz-category { color: var(--accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 1rem; }
+    .quiz-options { display: flex; flex-direction: column; gap: 0.6rem; }
+    .quiz-option {
+        display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.9rem 1rem;
+        border: 2px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s ease;
+    }
+    .quiz-option:hover { border-color: var(--accent); background: var(--light-accent); }
+    .quiz-option.selected { border-color: var(--primary); background: var(--light-accent); box-shadow: 0 4px 12px rgba(15,58,125,0.1); }
+    .quiz-nav { display: flex; justify-content: space-between; margin-top: 1.75rem; gap: 1rem; }
+
+    .results-level { text-align: center; padding: 1.5rem; border-radius: 12px; background: var(--light-accent); margin-bottom: 1.5rem; }
+    .results-level .level-name { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
+    .score-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.75rem; }
+    .score-card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; text-align: center; }
+    .score-card .val { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+    .score-card .lbl { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-top: 0.3rem; }
+    .chart-wrap { position: relative; height: 320px; margin-bottom: 2rem; }
+    .cat-row { border-left: 4px solid var(--accent); background: var(--light); border-radius: 0 8px 8px 0; padding: 1rem; margin-bottom: 0.75rem; }
+    .cat-row .cat-head { display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+    .cat-row p { color: var(--muted); font-size: 0.9rem; margin-top: 0.4rem; }
+    .explain-btn { font-size: 0.78rem; color: var(--accent); background: none; border: none; cursor: pointer; padding: 0; font-weight: 600; }
+    .explain-text { display: none; margin-top: 0.5rem; font-size: 0.85rem; color: var(--primary); background: var(--light-accent); padding: 0.6rem 0.75rem; border-radius: 6px; }
+    .explain-text.visible { display: block; }
+    .roadmap-col h4 { color: var(--primary); margin: 1.25rem 0 0.75rem; }
+    .roadmap-item { padding: 0.75rem; border-left: 4px solid var(--success); background: var(--light); border-radius: 0 8px 8px 0; margin-bottom: 0.6rem; font-size: 0.9rem; }
+    .locked-banner { background: var(--light-accent); border: 1px dashed var(--accent); border-radius: 10px; padding: 1.25rem; text-align: center; margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+<div class="scroll-progress" id="scrollProgress"></div>
+<nav id="mainNav">
+    <div class="nav-container">
+        <a href="/" class="logo">🛡️ KVH</a>
+        <div class="nav-group">
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-btn">Industries <span class="caret">▾</span></button>
+                <div class="nav-dropdown-menu" id="navIndustryMenu"><span class="menu-group-label">Loading…</span></div>
+            </div>
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-btn">Learn More <span class="caret">▾</span></button>
+                <div class="nav-dropdown-menu">
+                    <a href="/learn/cmm.html">What is CMM?</a>
+                    <a href="/learn/iso.html">ISO Assessments</a>
+                    <a href="/learn/security.html">Security Assessments</a>
+                    <a href="/learn/process-maturity.html">Process Maturity Assessments</a>
+                    <a href="/learn/compliance.html">Compliance Assessments</a>
+                </div>
+            </div>
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-btn">Connect With Us <span class="caret">▾</span></button>
+                <div class="nav-dropdown-menu">
+                    <a href="/connect#schedule">Schedule a 15-min Consultation</a>
+                    <a href="/connect#contact">Contact / Email Us</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="flow-wrap">
+    <div class="stepper" id="stepper"></div>
+    <div id="panelHost"></div>
+</div>
+
+<script src="/app.js"></script>
+
+<footer>
+    <p>&copy; 2026 KVH Assessment Platform.</p>
+    <p style="margin-top:1rem;opacity:0.7;font-size:0.9rem;"><a href="/">Home</a> · <a href="/connect">Connect With Us</a> · <a href="/dashboard">Dashboard</a></p>
+</footer>
+<button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
+
+<script>
+const STEPS = ['Industry', 'Standard', 'Assessment', 'Questions', 'Report'];
+let state = {
+    step: 0,
+    industry: null, standard: null, template: null,
+    tier: 'free', email: '',
+    assessmentId: null, questions: [], currentQ: 0, answers: {},
+    result: null,
+};
+let radarChart = null;
+
+const panelHost = document.getElementById('panelHost');
+
+function renderStepper() {
+    document.getElementById('stepper').innerHTML = STEPS.map((label, i) => {
+        const cls = i < state.step ? 'done' : i === state.step ? 'active' : '';
+        return `<div class="step-pill ${cls}">${i < state.step ? '✓ ' : ''}${label}</div>`;
+    }).join('');
+}
+
+function goTo(step) { state.step = step; renderStepper(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+async function render() {
+    renderStepper();
+    if (state.step === 0) return renderIndustryStep();
+    if (state.step === 1) return renderStandardStep();
+    if (state.step === 2) return renderTemplateStep();
+    if (state.step === 3) return renderTierThenQuiz();
+    if (state.step === 4) return renderResults();
+}
+
+// ---------------- Step 0: Industry ----------------
+async function renderIndustryStep() {
+    panelHost.innerHTML = `<div class="panel"><h2>Choose Your Industry</h2><p class="hint">This determines which standards and frameworks apply.</p><div class="choice-grid" id="industryGrid">Loading…</div></div>`;
+    const res = await fetch(`${API_BASE}/industries`);
+    const data = await res.json();
+    const grid = document.getElementById('industryGrid');
+    if (!data.ok || !data.industries.length) { grid.innerHTML = '<p style="color:var(--muted)">No industries configured yet.</p>'; return; }
+    grid.innerHTML = data.industries.map((i) => `
+        <div class="choice-card" data-id="${i.id}">
+            <h4>${escapeHtml(i.name)}</h4>
+            <p>${escapeHtml(i.description || '')}</p>
+        </div>
+    `).join('');
+    grid.querySelectorAll('.choice-card').forEach((card) => {
+        card.addEventListener('click', () => {
+            state.industry = data.industries.find((i) => i.id === card.dataset.id);
+            state.standard = null; state.template = null;
+            goTo(1);
+        });
+    });
+}
+
+// ---------------- Step 1: Standard ----------------
+async function renderStandardStep() {
+    panelHost.innerHTML = `<div class="panel"><h2>Choose a Standard / Framework</h2><p class="hint">Applicable to ${escapeHtml(state.industry.name)}.</p><div class="choice-grid" id="standardGrid">Loading…</div><div class="quiz-nav"><button class="btn btn-secondary" id="backBtn">Back</button><span></span></div></div>`;
+    document.getElementById('backBtn').addEventListener('click', () => goTo(0));
+    const res = await fetch(`${API_BASE}/industries/${state.industry.id}/standards`);
+    const data = await res.json();
+    const grid = document.getElementById('standardGrid');
+    if (!data.ok || !data.standards.length) { grid.innerHTML = '<p style="color:var(--muted)">No standards configured for this industry yet.</p>'; return; }
+    grid.innerHTML = data.standards.map((s) => `
+        <div class="choice-card" data-id="${s.id}">
+            <h4>${escapeHtml(s.name)}</h4>
+            <p>${escapeHtml(s.description || '')}</p>
+        </div>
+    `).join('');
+    grid.querySelectorAll('.choice-card').forEach((card) => {
+        card.addEventListener('click', () => {
+            state.standard = data.standards.find((s) => s.id === card.dataset.id);
+            state.template = null;
+            goTo(2);
+        });
+    });
+}
+
+// ---------------- Step 2: Template ----------------
+async function renderTemplateStep() {
+    panelHost.innerHTML = `<div class="panel"><h2>Choose Your Assessment</h2><p class="hint">Assessment types available for ${escapeHtml(state.standard.name)}.</p><div class="choice-grid" id="templateGrid">Loading…</div><div class="quiz-nav"><button class="btn btn-secondary" id="backBtn">Back</button><span></span></div></div>`;
+    document.getElementById('backBtn').addEventListener('click', () => goTo(1));
+    const res = await fetch(`${API_BASE}/standards/${state.standard.id}/templates`);
+    const data = await res.json();
+    const grid = document.getElementById('templateGrid');
+    if (!data.ok || !data.templates.length) { grid.innerHTML = '<p style="color:var(--muted)">No assessment templates configured for this standard yet.</p>'; return; }
+    grid.innerHTML = data.templates.map((t) => `
+        <div class="choice-card" data-id="${t.id}">
+            <h4>${escapeHtml(t.name)}</h4>
+            <p>${escapeHtml(t.description || '')}</p>
+        </div>
+    `).join('');
+    grid.querySelectorAll('.choice-card').forEach((card) => {
+        card.addEventListener('click', () => {
+            state.template = data.templates.find((t) => t.id === card.dataset.id);
+            goTo(3);
+        });
+    });
+}
+
+// ---------------- Step 3: Tier + Quiz ----------------
+function renderTierThenQuiz() {
+    if (!state.assessmentId) return renderTierPicker();
+    return renderQuizStep();
+}
+
+function renderTierPicker() {
+    panelHost.innerHTML = `
+        <div class="panel">
+            <h2>${escapeHtml(state.template.name)}</h2>
+            <p class="hint">${escapeHtml(state.industry.name)} · ${escapeHtml(state.standard.name)}</p>
+            <div class="tier-grid">
+                <div class="tier-card selected" data-tier="free">
+                    <h4>Free Assessment</h4>
+                    <p style="color:var(--muted);font-size:0.88rem;">Quick scorecard, no email required.</p>
+                    <ul><li>5 AI-generated questions</li><li>Basic scorecard</li><li>No downloadable report</li></ul>
+                </div>
+                <div class="tier-card" data-tier="premium">
+                    <h4>Full AI Report</h4>
+                    <p style="color:var(--muted);font-size:0.88rem;">Free, capped at 2 per day per email.</p>
+                    <ul><li>8 AI-generated questions</li><li>Full Claude-written scorecard &amp; analysis</li><li>30/60/90-day roadmap</li><li>Downloadable .docx report</li></ul>
+                </div>
+            </div>
+            <div class="form-group" id="emailField" style="display:none;">
+                <label for="emailInput">Work Email *</label>
+                <input type="email" id="emailInput" placeholder="you@company.com" />
+            </div>
+            <div class="form-error" id="tierError"></div>
+            <div class="quiz-nav">
+                <button class="btn btn-secondary" id="backBtn">Back</button>
+                <button class="btn btn-primary" id="beginBtn">Begin Assessment</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('backBtn').addEventListener('click', () => goTo(2));
+    document.querySelectorAll('.tier-card').forEach((card) => {
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.tier-card').forEach((c) => c.classList.remove('selected'));
+            card.classList.add('selected');
+            state.tier = card.dataset.tier;
+            document.getElementById('emailField').style.display = state.tier === 'premium' ? 'block' : 'none';
+        });
+    });
+    document.getElementById('beginBtn').addEventListener('click', beginAssessment);
+}
+
+async function beginAssessment() {
+    const errorEl = document.getElementById('tierError');
+    errorEl.classList.remove('visible');
+    if (state.tier === 'premium') {
+        state.email = document.getElementById('emailInput').value.trim();
+        if (!state.email || !state.email.includes('@')) {
+            errorEl.textContent = 'A valid work email is required for the full AI report.';
+            errorEl.classList.add('visible');
+            return;
+        }
+    }
+    const beginBtn = document.getElementById('beginBtn');
+    beginBtn.disabled = true;
+    beginBtn.innerHTML = '<span class="spinner"></span> Generating questions…';
+    try {
+        const res = await fetch(`${API_BASE}/assessments/start`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ template_id: state.template.id, tier: state.tier, email: state.email || null }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not start assessment.');
+        state.assessmentId = data.assessment_id;
+        state.questions = data.questions;
+        state.currentQ = 0;
+        state.answers = {};
+        renderQuizStep();
+    } catch (err) {
+        errorEl.textContent = err.message;
+        errorEl.classList.add('visible');
+        beginBtn.disabled = false;
+        beginBtn.textContent = 'Begin Assessment';
+    }
+}
+
+function renderQuizStep() {
+    const q = state.questions[state.currentQ];
+    const progress = Math.round((state.currentQ / state.questions.length) * 100);
+    const selected = state.answers[q.id];
+
+    let bodyHtml = '';
+    if (q.question_type === 'text' || q.question_type === 'evidence') {
+        bodyHtml = `<textarea id="freeTextInput" rows="5" placeholder="${q.question_type === 'evidence' ? 'Describe the supporting documentation you have…' : 'Your answer…'}">${selected ? escapeHtml(selected.text || '') : ''}</textarea>`;
+    } else {
+        bodyHtml = `<div class="quiz-options">${q.options.map((opt) => `
+            <label class="quiz-option ${selected && selected.value === opt.value ? 'selected' : ''}" data-value="${opt.value}">
+                <input type="radio" name="quiz-option" ${selected && selected.value === opt.value ? 'checked' : ''} />
+                <span>${escapeHtml(opt.label)}</span>
+            </label>
+        `).join('')}</div>`;
+    }
+
+    panelHost.innerHTML = `
+        <div class="panel">
+            <div class="quiz-category">${escapeHtml(q.category)}</div>
+            <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${progress}%;"></div></div>
+            <div class="quiz-question">Question ${state.currentQ + 1} of ${state.questions.length}: ${escapeHtml(q.question_text)}</div>
+            <div style="margin-top:1rem;">${bodyHtml}</div>
+            <div class="quiz-nav">
+                <button class="btn btn-secondary" id="quizBackBtn" ${state.currentQ === 0 ? 'disabled' : ''}>Back</button>
+                <button class="btn btn-primary" id="quizNextBtn">${state.currentQ === state.questions.length - 1 ? 'Generate Assessment' : 'Next'}</button>
+            </div>
+        </div>
+    `;
+
+    if (q.question_type !== 'text' && q.question_type !== 'evidence') {
+        panelHost.querySelectorAll('.quiz-option').forEach((label) => {
+            label.addEventListener('click', () => {
+                const value = Number(label.getAttribute('data-value'));
+                const opt = q.options.find((o) => o.value === value);
+                state.answers[q.id] = { value, label: opt.label };
+                renderQuizStep();
+            });
+        });
+    }
+
+    document.getElementById('quizBackBtn').addEventListener('click', () => {
+        state.currentQ = Math.max(0, state.currentQ - 1);
+        renderQuizStep();
+    });
+
+    document.getElementById('quizNextBtn').addEventListener('click', () => {
+        if (q.question_type === 'text' || q.question_type === 'evidence') {
+            const val = document.getElementById('freeTextInput').value.trim();
+            if (!val) { alert('Please provide an answer before continuing.'); return; }
+            state.answers[q.id] = { text: val };
+        } else if (!state.answers[q.id]) {
+            return;
+        }
+        if (state.currentQ < state.questions.length - 1) {
+            state.currentQ += 1;
+            renderQuizStep();
+        } else {
+            submitAssessment();
+        }
+    });
+}
+
+async function submitAssessment() {
+    panelHost.innerHTML = `<div class="panel" style="text-align:center;"><h2>Generating your assessment…</h2><p class="hint">Claude is analyzing your responses.</p><div class="spinner" style="width:32px;height:32px;border-color:rgba(15,58,125,0.2);border-top-color:var(--primary);"></div></div>`;
+    try {
+        const responses = state.questions.map((q) => ({
+            question_id: q.id,
+            answer: state.answers[q.id] || {},
+            evidence_note: '',
+        }));
+        const res = await fetch(`${API_BASE}/assessments/${state.assessmentId}/submit`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: state.email || null, responses }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not generate assessment.');
+        state.result = data;
+        goTo(4);
+    } catch (err) {
+        panelHost.innerHTML = `<div class="panel"><h2>Something went wrong</h2><p class="form-error visible">${escapeHtml(err.message)}</p><button class="btn btn-primary" id="retryBtn" style="margin-top:1rem;">Try Again</button></div>`;
+        document.getElementById('retryBtn').addEventListener('click', () => { state.step = 3; render(); });
+    }
+}
+
+// ---------------- Step 4: Results ----------------
+function renderResults() {
+    const r = state.result;
+    const score = r.score;
+    panelHost.innerHTML = `
+        <div class="panel">
+            <h2>Your Results</h2>
+            <p class="hint">${escapeHtml(r.industry_name)} · ${escapeHtml(r.standard_name)} · ${escapeHtml(r.template_name)}</p>
+            <div class="results-level">
+                <div class="level-name">${escapeHtml(score.maturity_level)}</div>
+                <p style="margin-top:0.5rem;color:var(--muted);">Overall Score: ${score.overall_score}/100</p>
+            </div>
+            <div class="score-cards">
+                <div class="score-card"><div class="val">${score.overall_score}</div><div class="lbl">Overall Score</div></div>
+                <div class="score-card"><div class="val">${score.compliance_pct}%</div><div class="lbl">Compliance</div></div>
+                <div class="score-card"><div class="val" style="text-transform:capitalize;">${escapeHtml(score.risk_rating)}</div><div class="lbl">Risk Level</div></div>
+                <div class="score-card"><div class="val">${score.category_scores.length}</div><div class="lbl">Categories Assessed</div></div>
+            </div>
+            <div class="chart-wrap"><canvas id="radarChart"></canvas></div>
+
+            <h3 style="color:var(--primary);margin-bottom:0.75rem;">Category Breakdown</h3>
+            <div id="categoryList"></div>
+
+            ${r.report ? renderReportSections(r.report) : renderLockedBanner()}
+
+            <div class="quiz-nav" style="margin-top:2rem;">
+                <a href="/assessment" class="btn btn-secondary">Start Another Assessment</a>
+                ${r.report ? `<a href="${API_BASE}/assessments/${r.assessment_id}/report.docx" class="btn btn-primary">Download Report (.docx)</a>` : ''}
+            </div>
+        </div>
+    `;
+
+    document.getElementById('categoryList').innerHTML = score.category_scores.map((c) => `
+        <div class="cat-row">
+            <div class="cat-head"><span>${escapeHtml(c.category)}</span><span>${c.score}/5</span></div>
+            <p>${escapeHtml(c.insight)}</p>
+            <p><strong>Recommendation:</strong> ${escapeHtml(c.recommendation)}</p>
+            <button class="explain-btn" data-category="${escapeHtml(c.category)}">Why this score? →</button>
+            <div class="explain-text"></div>
+        </div>
+    `).join('');
+
+    document.querySelectorAll('.explain-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            const textEl = btn.nextElementSibling;
+            if (textEl.classList.contains('visible')) { textEl.classList.remove('visible'); return; }
+            textEl.classList.add('visible');
+            textEl.textContent = 'Thinking…';
+            try {
+                const res = await fetch(`${API_BASE}/assessments/${r.assessment_id}/explain-score`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category: btn.dataset.category }),
+                });
+                const data = await res.json();
+                textEl.textContent = data.explanation || 'No explanation available.';
+            } catch {
+                textEl.textContent = 'Could not load explanation.';
+            }
+        });
+    });
+
+    const ctx = document.getElementById('radarChart');
+    if (radarChart) radarChart.destroy();
+    radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: score.category_scores.map((c) => c.category),
+            datasets: [{
+                label: 'Score', data: score.category_scores.map((c) => c.score),
+                borderColor: '#0f3a7d', backgroundColor: 'rgba(15,58,125,0.15)', pointBackgroundColor: '#00a8e8',
+            }],
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { r: { min: 0, max: 5, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } },
+    });
+}
+
+function renderReportSections(report) {
+    const roadmapCol = (label, items) => `
+        <div class="roadmap-col"><h4>${label}</h4>${(items || []).map((it) => `
+            <div class="roadmap-item"><strong>${escapeHtml(it.action)}</strong><br>${escapeHtml(it.rationale)}</div>
+        `).join('') || '<p class="hint">No items.</p>'}</div>
+    `;
+    return `
+        <h3 style="color:var(--primary);margin:1.75rem 0 0.75rem;">Executive Summary</h3>
+        <p style="color:var(--dark);">${escapeHtml(report.executive_summary)}</p>
+        <h3 style="color:var(--primary);margin:1.75rem 0 0.75rem;">Improvement Roadmap</h3>
+        ${roadmapCol('30-Day Action Plan', report.roadmap.day_30)}
+        ${roadmapCol('60-Day Improvement Plan', report.roadmap.day_60)}
+        ${roadmapCol('90-Day Transformation Roadmap', report.roadmap.day_90)}
+    `;
+}
+
+function renderLockedBanner() {
+    return `
+        <div class="locked-banner">
+            <strong>Want the full report?</strong>
+            <p style="color:var(--muted);margin-top:0.5rem;">Upgrade this assessment to the Full AI Report tier for a Claude-written executive summary, a 30/60/90-day roadmap, and a downloadable .docx — free, 2 per day.</p>
+            <a href="/assessment" class="btn btn-primary" style="margin-top:1rem;">Start a Full AI Report</a>
+        </div>
+    `;
+}
+
+render();
+</script>
+</body>
+</html>
