@@ -237,12 +237,12 @@ function renderTierPicker() {
                 <div class="tier-card selected" data-tier="free">
                     <h4>Free Assessment</h4>
                     <p style="color:var(--muted);font-size:0.88rem;">Quick scorecard, no email required.</p>
-                    <ul><li>5 AI-generated questions</li><li>Basic scorecard</li><li>No downloadable report</li></ul>
+                    <ul><li>5 questions built for your standard</li><li>Basic scorecard</li><li>No downloadable report</li></ul>
                 </div>
                 <div class="tier-card" data-tier="premium">
-                    <h4>Full AI Report</h4>
+                    <h4>Full Personalized Report</h4>
                     <p style="color:var(--muted);font-size:0.88rem;">Free, capped at 2 per day per email.</p>
-                    <ul><li>8 AI-generated questions</li><li>Full Claude-written scorecard &amp; analysis</li><li>30/60/90-day roadmap</li><li>Downloadable .docx report</li></ul>
+                    <ul><li>8 questions built for your standard</li><li>Full scorecard &amp; analysis</li><li>30/60/90-day roadmap</li><li>Downloadable .docx report</li></ul>
                 </div>
             </div>
             <div class="form-group" id="emailField" style="display:none;">
@@ -274,7 +274,7 @@ async function beginAssessment() {
     if (state.tier === 'premium') {
         state.email = document.getElementById('emailInput').value.trim();
         if (!state.email || !state.email.includes('@')) {
-            errorEl.textContent = 'A valid work email is required for the full AI report.';
+            errorEl.textContent = 'A valid work email is required for the full personalized report.';
             errorEl.classList.add('visible');
             return;
         }
@@ -493,8 +493,8 @@ function renderLockedBanner() {
     return `
         <div class="locked-banner">
             <strong>Want the full report?</strong>
-            <p style="color:var(--muted);margin-top:0.5rem;">Upgrade this assessment to the Full AI Report tier for a Claude-written executive summary, a 30/60/90-day roadmap, and a downloadable .docx. It's free, 2 per day.</p>
-            <a href="/assessment" class="btn btn-primary" style="margin-top:1rem;">Start a Full AI Report</a>
+            <p style="color:var(--muted);margin-top:0.5rem;">Upgrade this assessment to the Full Personalized Report tier for a complete executive summary, a 30/60/90-day roadmap, and a downloadable .docx. It's free, 2 per day.</p>
+            <a href="/assessment" class="btn btn-primary" style="margin-top:1rem;">Start a Full Personalized Report</a>
         </div>
     `;
 }
