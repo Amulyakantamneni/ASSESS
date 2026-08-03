@@ -122,7 +122,7 @@ def render_docx(*, assessment_id: str, industry: str, standard: str, template_na
         _heading(doc, label, size=13)
         for item in roadmap.get(key, []):
             p = doc.add_paragraph(style="List Bullet")
-            p.add_run(f"{item.get('action', '')} — ").bold = True
+            p.add_run(f"{item.get('action', '')}: ").bold = True
             p.add_run(item.get("rationale", ""))
 
     # Conclusion

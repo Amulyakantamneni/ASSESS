@@ -3,23 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>What is CMM? — MaturityAssess</title>
+<title>What is CMM? | MaturityAssess</title>
 <link rel="stylesheet" href="/style.css">
 <style>
-    .content { max-width: 800px; margin: 0 auto; padding: 3rem 2rem 5rem; }
-    .content h1 { color: var(--primary); font-size: 2.2rem; margin-bottom: 1rem; }
-    .content h2 { color: var(--primary); font-size: 1.3rem; margin: 2rem 0 0.75rem; }
+    .content { max-width: 900px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+    .content h1 { color: var(--primary); font-size: 2.3rem; margin-bottom: 1rem; text-align: center; }
+    .content .lead { color: var(--muted); font-size: 1.1rem; text-align: center; max-width: 680px; margin: 0 auto 2.5rem; }
+    .content h2 { color: var(--primary); font-size: 1.5rem; margin: 3rem 0 1.25rem; text-align: center; }
     .content p, .content li { color: var(--dark); line-height: 1.8; }
-    .content ul { margin-left: 1.25rem; margin-bottom: 1rem; }
-    .level-list { display: grid; gap: 0.75rem; margin: 1rem 0; }
-    .level-row { display: flex; gap: 1rem; align-items: flex-start; background: white; border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
-    .level-num { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+
+    .icon-badge {
+        width: 52px; height: 52px; border-radius: 13px; display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, var(--light-accent), #fff);
+        box-shadow: 0 4px 14px rgba(15,58,125,0.08); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .card:hover .icon-badge { transform: scale(1.1) rotate(-4deg); }
+
+    .level-list { display: flex; flex-direction: column; gap: 0.85rem; margin: 1.5rem 0; }
+    .level-row {
+        display: flex; gap: 1.1rem; align-items: flex-start; background: white; border: 1px solid var(--border);
+        border-radius: 12px; padding: 1.25rem; transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .level-row:hover { transform: translateX(6px); box-shadow: 0 10px 24px rgba(15,58,125,0.08); }
+    .level-num {
+        width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; color: white; display: flex;
+        align-items: center; justify-content: center; font-weight: 800; font-size: 1rem;
+    }
+
+    .reason-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
+    .reason-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .reason-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(15,58,125,0.1); }
+    .reason-card h3 { color: var(--dark); font-size: 1rem; margin-bottom: 0.5rem; }
+    .reason-card p { color: var(--muted); font-size: 0.9rem; }
+
+    .cta-box { text-align: center; margin-top: 3rem; background: linear-gradient(135deg, var(--light-accent), white); border-radius: 14px; padding: 2.5rem; }
 </style>
 </head>
 <body>
 <div class="scroll-progress" id="scrollProgress"></div>
 <nav id="mainNav"><div class="nav-container">
-    <a href="/" class="logo">📊 MaturityAssess</a>
+    <a href="/" class="logo">MaturityAssess</a>
     <div class="nav-group">
         <div class="nav-dropdown"><button class="nav-dropdown-btn">Industries <span class="caret">▾</span></button><div class="nav-dropdown-menu" id="navIndustryMenu"><span class="menu-group-label">Loading…</span></div></div>
         <div class="nav-dropdown"><button class="nav-dropdown-btn">Learn More <span class="caret">▾</span></button><div class="nav-dropdown-menu">
@@ -39,26 +62,61 @@
 
 <div class="content">
     <h1>What is CMM?</h1>
-    <p>The Capability Maturity Model (CMM) is a framework for evaluating and improving how consistently an organization executes its processes — originally developed for software engineering, now applied broadly across process, security, and compliance assessments.</p>
+    <p class="lead">The Capability Maturity Model (CMM) is a framework for evaluating and improving how consistently an organization executes its processes. It was originally developed for software engineering and is now applied broadly across process, security, and compliance assessments.</p>
 
     <h2>The Five Maturity Levels</h2>
     <div class="level-list">
-        <div class="level-row"><div class="level-num">1</div><div><strong>Initial / Ad Hoc</strong><p>Processes are unpredictable and reactive. Success depends on individual effort rather than repeatable process.</p></div></div>
-        <div class="level-row"><div class="level-num">2</div><div><strong>Repeatable / Managed</strong><p>Basic project management and process discipline exist. Requirements are captured and tracked.</p></div></div>
-        <div class="level-row"><div class="level-num">3</div><div><strong>Defined / Standardized</strong><p>Processes are documented, standardized, and proactively managed across the organization.</p></div></div>
-        <div class="level-row"><div class="level-num">4</div><div><strong>Quantitatively Managed</strong><p>Processes are measured and controlled with quantitative data. Variation is understood.</p></div></div>
-        <div class="level-row"><div class="level-num">5</div><div><strong>Optimizing</strong><p>Continuous improvement is embedded in culture. The organization proactively refines its own processes.</p></div></div>
+        <div class="level-row">
+            <div class="level-num" style="background:#ef4444;">1</div>
+            <div><strong>Initial / Ad Hoc</strong><p>Processes are unpredictable and reactive. Success depends on individual effort rather than a repeatable process.</p></div>
+        </div>
+        <div class="level-row">
+            <div class="level-num" style="background:#f59e0b;">2</div>
+            <div><strong>Repeatable / Managed</strong><p>Basic project management and process discipline exist. Requirements are captured and tracked.</p></div>
+        </div>
+        <div class="level-row">
+            <div class="level-num" style="background:#3b82f6;">3</div>
+            <div><strong>Defined / Standardized</strong><p>Processes are documented, standardized, and proactively managed across the organization.</p></div>
+        </div>
+        <div class="level-row">
+            <div class="level-num" style="background:#8b5cf6;">4</div>
+            <div><strong>Quantitatively Managed</strong><p>Processes are measured and controlled with quantitative data, and variation is understood.</p></div>
+        </div>
+        <div class="level-row">
+            <div class="level-num" style="background:#10b981;">5</div>
+            <div><strong>Optimizing</strong><p>Continuous improvement is embedded in the culture. The organization proactively refines its own processes.</p></div>
+        </div>
     </div>
 
-    <h2>Why Organizations Use Maturity Assessments</h2>
-    <ul>
-        <li>Benchmark current capability against an objective, industry-recognized scale</li>
-        <li>Identify specific, prioritized gaps rather than vague improvement areas</li>
-        <li>Build a credible business case for process investment</li>
-        <li>Track improvement over time with repeatable, comparable assessments</li>
-    </ul>
+    <h2>Why Organizations Use It</h2>
+    <div class="reason-grid">
+        <div class="card reason-card">
+            <div class="icon-badge">📏</div>
+            <h3>An Objective Benchmark</h3>
+            <p>A recognized scale to measure capability against, instead of relying on gut feel.</p>
+        </div>
+        <div class="card reason-card">
+            <div class="icon-badge">🎯</div>
+            <h3>Prioritized Gaps</h3>
+            <p>Specific, ranked improvement areas rather than a vague sense that something's off.</p>
+        </div>
+        <div class="card reason-card">
+            <div class="icon-badge">💼</div>
+            <h3>A Credible Business Case</h3>
+            <p>Evidence-based justification for investing in process improvement.</p>
+        </div>
+        <div class="card reason-card">
+            <div class="icon-badge">🔁</div>
+            <h3>Trackable Progress</h3>
+            <p>A repeatable, comparable assessment you can rerun to see if things actually improved.</p>
+        </div>
+    </div>
 
-    <p style="margin-top:2rem;"><a href="/assessment" class="btn btn-primary">Start a CMM-style Assessment</a></p>
+    <div class="cta-box">
+        <h2 style="margin-top:0;">See Where Your Organization Stands</h2>
+        <p style="color:var(--muted);max-width:500px;margin:0 auto 1.5rem;">Run a CMM-style assessment tailored to your industry in minutes.</p>
+        <a href="/assessment" class="btn btn-primary">Start a CMM-Style Assessment</a>
+    </div>
 </div>
 
 <footer><p>&copy; 2026 MaturityAssess.</p></footer>

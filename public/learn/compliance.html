@@ -3,20 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Compliance Assessments — MaturityAssess</title>
+<title>Compliance Assessments | MaturityAssess</title>
 <link rel="stylesheet" href="/style.css">
 <style>
-    .content { max-width: 800px; margin: 0 auto; padding: 3rem 2rem 5rem; }
-    .content h1 { color: var(--primary); font-size: 2.2rem; margin-bottom: 1rem; }
-    .content h2 { color: var(--primary); font-size: 1.3rem; margin: 2rem 0 0.75rem; }
+    .content { max-width: 900px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+    .content h1 { color: var(--primary); font-size: 2.3rem; margin-bottom: 1rem; text-align: center; }
+    .content .lead { color: var(--muted); font-size: 1.1rem; text-align: center; max-width: 680px; margin: 0 auto 2.5rem; }
+    .content h2 { color: var(--primary); font-size: 1.5rem; margin: 3rem 0 1.25rem; text-align: center; }
     .content p, .content li { color: var(--dark); line-height: 1.8; }
-    .content ul { margin-left: 1.25rem; margin-bottom: 1rem; }
+
+    .icon-badge {
+        width: 52px; height: 52px; border-radius: 13px; display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, var(--light-accent), #fff);
+        box-shadow: 0 4px 14px rgba(15,58,125,0.08); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .card:hover .icon-badge { transform: scale(1.1) rotate(-4deg); }
+
+    .comp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; }
+    .comp-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .comp-card:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(15,58,125,0.1); }
+    .comp-card h4 { color: var(--primary); margin-bottom: 0.4rem; font-size: 1.05rem; }
+    .comp-card p { color: var(--muted); font-size: 0.9rem; }
+
+    .why-box { background: white; border: 1px solid var(--border); border-radius: 14px; padding: 2rem; text-align: center; }
+    .why-box p { color: var(--muted); max-width: 640px; margin: 0 auto; }
+
+    .cta-box { text-align: center; margin-top: 3rem; background: linear-gradient(135deg, var(--light-accent), white); border-radius: 14px; padding: 2.5rem; }
 </style>
 </head>
 <body>
 <div class="scroll-progress" id="scrollProgress"></div>
 <nav id="mainNav"><div class="nav-container">
-    <a href="/" class="logo">📊 MaturityAssess</a>
+    <a href="/" class="logo">MaturityAssess</a>
     <div class="nav-group">
         <div class="nav-dropdown"><button class="nav-dropdown-btn">Industries <span class="caret">▾</span></button><div class="nav-dropdown-menu" id="navIndustryMenu"><span class="menu-group-label">Loading…</span></div></div>
         <div class="nav-dropdown"><button class="nav-dropdown-btn">Learn More <span class="caret">▾</span></button><div class="nav-dropdown-menu">
@@ -36,21 +54,47 @@
 
 <div class="content">
     <h1>Compliance Assessments</h1>
-    <p>A compliance assessment measures your organization's adherence to a specific regulatory or contractual requirement — like HIPAA, PCI DSS, GDPR, or SOX — and identifies exactly where you fall short before a regulator or auditor does.</p>
+    <p class="lead">A compliance assessment measures your organization's adherence to a specific regulatory or contractual requirement, such as HIPAA, PCI DSS, GDPR, or SOX, and identifies exactly where you fall short before a regulator or auditor does.</p>
 
     <h2>Frameworks We Cover</h2>
-    <ul>
-        <li><strong>HIPAA / HITRUST</strong> — healthcare data privacy and security</li>
-        <li><strong>PCI DSS</strong> — payment card data security</li>
-        <li><strong>SOX</strong> — financial reporting controls</li>
-        <li><strong>GDPR / FERPA</strong> — data privacy for EU citizens / student records</li>
-        <li><strong>FDA</strong> — regulatory compliance for medical devices and software</li>
-    </ul>
+    <div class="comp-grid">
+        <div class="card comp-card">
+            <div class="icon-badge">🏥</div>
+            <h4>HIPAA / HITRUST</h4>
+            <p>Healthcare data privacy and security.</p>
+        </div>
+        <div class="card comp-card">
+            <div class="icon-badge">💳</div>
+            <h4>PCI DSS</h4>
+            <p>Payment card data security.</p>
+        </div>
+        <div class="card comp-card">
+            <div class="icon-badge">📊</div>
+            <h4>SOX</h4>
+            <p>Financial reporting controls.</p>
+        </div>
+        <div class="card comp-card">
+            <div class="icon-badge">🇪🇺</div>
+            <h4>GDPR / FERPA</h4>
+            <p>Data privacy for EU citizens and student records.</p>
+        </div>
+        <div class="card comp-card">
+            <div class="icon-badge">💊</div>
+            <h4>FDA</h4>
+            <p>Regulatory compliance for medical devices and software.</p>
+        </div>
+    </div>
 
     <h2>Why This Matters</h2>
-    <p>Non-compliance carries real financial and legal risk. A structured compliance assessment turns "are we compliant?" into a specific, evidence-based answer — with a prioritized plan to close the gaps that matter most.</p>
+    <div class="why-box">
+        <p>Non-compliance carries real financial and legal risk. A structured compliance assessment turns "are we compliant?" into a specific, evidence-based answer, with a prioritized plan to close the gaps that matter most.</p>
+    </div>
 
-    <p style="margin-top:1.5rem;"><a href="/assessment" class="btn btn-primary">Start a Compliance Assessment</a></p>
+    <div class="cta-box">
+        <h2 style="margin-top:0;">Find Out Where You Stand</h2>
+        <p style="color:var(--muted);max-width:500px;margin:0 auto 1.5rem;">Get a specific, evidence-based compliance picture in minutes.</p>
+        <a href="/assessment" class="btn btn-primary">Start a Compliance Assessment</a>
+    </div>
 </div>
 
 <footer><p>&copy; 2026 MaturityAssess.</p></footer>

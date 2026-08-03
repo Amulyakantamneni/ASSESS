@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>Analytics Dashboard — MaturityAssess</title>
+<title>Analytics Dashboard | MaturityAssess</title>
 <link rel="stylesheet" href="/style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
@@ -33,7 +33,7 @@
 </head>
 <body>
 <div class="topbar">
-    <div><h1>MaturityAssess — Analytics Dashboard</h1></div>
+    <div><h1>MaturityAssess: Analytics Dashboard</h1></div>
     <div style="display:flex;gap:10px;">
         <a href="/admin">Admin</a>
         <a href="/">Back to Site</a>
@@ -42,7 +42,7 @@
 <main>
     <div class="kpi-grid" id="kpiGrid"></div>
     <div class="grid-2">
-        <div class="panel"><h2>Activity — last 30 days</h2><p class="panel-sub">New leads vs. assessments started</p><div class="chart-wrap"><canvas id="activityChart"></canvas></div></div>
+        <div class="panel"><h2>Activity: last 30 days</h2><p class="panel-sub">New leads vs. assessments started</p><div class="chart-wrap"><canvas id="activityChart"></canvas></div></div>
         <div class="panel"><h2>Maturity Level Distribution</h2><p class="panel-sub">Completed assessments by AI-assigned level</p><div class="chart-wrap"><canvas id="levelChart"></canvas></div></div>
     </div>
     <div class="grid-2">
@@ -117,7 +117,7 @@ async function load() {
     document.getElementById('leadsTableWrap').innerHTML = leads.length ? `
         <table><thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Company</th><th>Source</th><th>Message</th></tr></thead>
         <tbody>${leads.map((l) => `
-            <tr><td>${fmtDate(l.createdAt)}</td><td>${esc(l.name)}</td><td>${esc(l.email)}</td><td>${esc(l.company || '—')}</td><td>${esc(l.source)}</td><td>${esc(l.message || '—')}</td></tr>
+            <tr><td>${fmtDate(l.createdAt)}</td><td>${esc(l.name)}</td><td>${esc(l.email)}</td><td>${esc(l.company || 'N/A')}</td><td>${esc(l.source)}</td><td>${esc(l.message || 'N/A')}</td></tr>
         `).join('')}</tbody></table>
     ` : '<div class="empty-state">No leads yet.</div>';
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — MaturityAssess</title>
+<title>Admin | MaturityAssess</title>
 <link rel="stylesheet" href="/style.css">
 <style>
     .admin-topbar { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 1.25rem 2rem; display: flex; justify-content: space-between; align-items: center; }
@@ -27,7 +27,7 @@
 </head>
 <body>
 <div class="admin-topbar">
-    <div>📊 MaturityAssess Admin</div>
+    <div>MaturityAssess Admin</div>
     <div style="display:flex;gap:1.5rem;align-items:center;">
         <a href="/dashboard">Analytics Dashboard</a>
         <a href="/">View Site</a>
@@ -126,7 +126,7 @@ function renderIndustries(host) {
 
 function renderStandards(host) {
     const industryOptions = cache.industries.map((i) => `<option value="${i.id}">${esc(i.name)}</option>`).join('');
-    const industryName = (id) => cache.industries.find((i) => i.id === id)?.name || '—';
+    const industryName = (id) => cache.industries.find((i) => i.id === id)?.name || 'N/A';
     host.innerHTML = `
         <div class="panel">
             <div class="add-form">
@@ -161,7 +161,7 @@ function renderStandards(host) {
 
 function renderTemplates(host) {
     const standardOptions = cache.standards.map((s) => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
-    const standardName = (id) => cache.standards.find((s) => s.id === id)?.name || '—';
+    const standardName = (id) => cache.standards.find((s) => s.id === id)?.name || 'N/A';
     host.innerHTML = `
         <div class="panel">
             <div class="add-form">

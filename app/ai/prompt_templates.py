@@ -2,6 +2,13 @@
 # Prompt-building functions, parameterized by industry/standard/template so
 # behavior is data-driven rather than hardcoded per industry.
 
+STYLE_DIRECTIVE = (
+    "Writing style: write in plain, professional prose, the way a sharp human consultant "
+    "would. Use complete sentences with normal punctuation (periods, commas, colons, "
+    "semicolons). Never use em dashes or en dashes. Avoid generic AI-sounding phrasing "
+    "and filler."
+)
+
 
 def question_generation_prompt(industry: str, standard: str, template_name: str, num_categories: int = 8) -> tuple[str, str]:
     system = (
@@ -9,7 +16,8 @@ def question_generation_prompt(industry: str, standard: str, template_name: str,
         "You write assessment questionnaires that evaluate an organization's maturity "
         "against a named industry standard or framework. Questions must be concrete, "
         "answerable without specialist consulting help, and cover the standard's real "
-        "requirement areas — not generic filler."
+        "requirement areas, not generic filler. "
+        + STYLE_DIRECTIVE
     )
     user = (
         f"Design an assessment for:\n"
@@ -24,7 +32,7 @@ def question_generation_prompt(industry: str, standard: str, template_name: str,
         f"- multiple_choice: for questions with a few distinct qualitative states, 3-5 options valued 1-5\n"
         f"- text: for open-ended questions needing a written answer (no options)\n"
         f"- evidence: for questions asking the user to describe supporting documentation (no options)\n\n"
-        f"Category names should be specific to {standard} (e.g. real control/requirement domains), "
+        f"Category names should be specific to {standard} (real control or requirement domains), "
         f"not generic labels like 'Category 1'."
     )
     return system, user
@@ -34,9 +42,10 @@ def scoring_prompt(industry: str, standard: str, template_name: str, qa_pairs: l
     system = (
         "You are a senior compliance and process-maturity assessor. You analyze an "
         "organization's questionnaire responses and produce an honest, evidence-based "
-        "scorecard against a named standard. Be specific — reference the actual answers "
+        "scorecard against a named standard. Be specific and reference the actual answers "
         "given, not generic advice. Scores should reflect real signal in the answers, not "
-        "default to the middle."
+        "default to the middle. "
+        + STYLE_DIRECTIVE
     )
     qa_text = "\n".join(
         f"- [{qa['category']}] Q: {qa['question']}\n  A: {qa['answer']}" for qa in qa_pairs
@@ -57,9 +66,10 @@ def scoring_prompt(industry: str, standard: str, template_name: str, qa_pairs: l
 def report_prompt(industry: str, standard: str, template_name: str, scorecard: dict) -> tuple[str, str]:
     system = (
         "You are a management consultant writing an executive assessment report. "
-        "Write in clear, professional, plain language — no filler, no hedging, no "
+        "Write in clear, professional, plain language with no filler, no hedging, and no "
         "generic advice that could apply to any organization. Ground every claim in "
-        "the scorecard data you were given."
+        "the scorecard data you were given. "
+        + STYLE_DIRECTIVE
     )
     user = (
         f"Industry: {industry}\nStandard/Framework: {standard}\nAssessment: {template_name}\n\n"
@@ -76,7 +86,8 @@ def report_prompt(industry: str, standard: str, template_name: str, scorecard: d
 def explain_score_prompt(industry: str, standard: str, category: str, score: float, insight: str, recommendation: str) -> tuple[str, str]:
     system = (
         "You explain assessment scores to the person who took the assessment. Be direct, "
-        "specific, and reference their actual score and category — not generic advice."
+        "specific, and reference their actual score and category, not generic advice. "
+        + STYLE_DIRECTIVE
     )
     user = (
         f"Industry: {industry}\nStandard/Framework: {standard}\n"

@@ -1,6 +1,6 @@
 // Shared behavior across every page: nav dropdowns, scroll progress, reveal
 // animations, ripple effect, back-to-top. Include after the page's own <script>
-// or before — order doesn't matter, everything here is deferred to DOMContentLoaded.
+// or before, order doesn't matter, everything here is deferred to DOMContentLoaded.
 
 const API_BASE = '/api';
 
