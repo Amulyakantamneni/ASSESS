@@ -3,12 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Connect With Us — KVH</title>
+<title>Connect With Our Experts — MaturityAssess</title>
 <link rel="stylesheet" href="/style.css">
 <style>
-    .content { max-width: 900px; margin: 0 auto; padding: 3rem 2rem 5rem; }
-    .content h1 { color: var(--primary); font-size: 2.2rem; margin-bottom: 0.5rem; text-align: center; }
-    .content .lead { text-align: center; color: var(--muted); margin-bottom: 2.5rem; }
+    .hero-connect {
+        max-width: 900px; margin: 0 auto; padding: 4rem 2rem 1rem; text-align: center;
+    }
+    .hero-connect h1 { color: var(--primary); font-size: 2.4rem; margin-bottom: 0.75rem; }
+    .hero-connect .lead { color: var(--muted); font-size: 1.1rem; max-width: 680px; margin: 0 auto; }
+
+    .icon-badge {
+        width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+        font-size: 1.6rem; margin-bottom: 1.1rem; background: linear-gradient(135deg, var(--light-accent), #fff);
+        box-shadow: 0 4px 14px rgba(15,58,125,0.08); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .card:hover .icon-badge { transform: scale(1.1) rotate(-4deg); }
+    .benefit-card h3 { color: var(--dark); font-size: 1.05rem; margin-bottom: 0.5rem; }
+    .benefit-card p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+
+    .content { max-width: 900px; margin: 0 auto; padding: 1rem 2rem 5rem; }
     .connect-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
     @media (max-width: 760px) { .connect-grid { grid-template-columns: 1fr; } }
     .panel { background: white; border-radius: 14px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid var(--border); }
@@ -17,12 +30,15 @@
         border: 2px dashed var(--border); border-radius: 10px; padding: 2rem; text-align: center; color: var(--muted);
         margin-top: 1rem;
     }
+    .why-connect { background: white; border-radius: 14px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid var(--border); margin-bottom: 2rem; }
+    .why-connect h2 { color: var(--primary); font-size: 1.3rem; margin-bottom: 0.5rem; }
+    .why-connect p.lead { color: var(--muted); margin-bottom: 1.5rem; }
 </style>
 </head>
 <body>
 <div class="scroll-progress" id="scrollProgress"></div>
 <nav id="mainNav"><div class="nav-container">
-    <a href="/" class="logo">🛡️ KVH</a>
+    <a href="/" class="logo">📊 MaturityAssess</a>
     <div class="nav-group">
         <div class="nav-dropdown"><button class="nav-dropdown-btn">Industries <span class="caret">▾</span></button><div class="nav-dropdown-menu" id="navIndustryMenu"><span class="menu-group-label">Loading…</span></div></div>
         <div class="nav-dropdown"><button class="nav-dropdown-btn">Learn More <span class="caret">▾</span></button><div class="nav-dropdown-menu">
@@ -36,14 +52,43 @@
     </div>
 </div></nav>
 
+<div class="hero-connect reveal-item">
+    <h1>Connect With Our Experts</h1>
+    <p class="lead">The self-serve assessment gets you a real scorecard in minutes. When you're ready to go deeper — get a personalized assessment built around your organization and a concrete plan to bridge the gap — that's what talking to us is for.</p>
+</div>
+
 <div class="content">
-    <h1>Connect With Us</h1>
-    <p class="lead">Talk to an expert about a facilitated assessment, or send us a message.</p>
+    <div class="why-connect">
+        <h2>Why Talk to Us Personally?</h2>
+        <p class="lead">A facilitated engagement goes further than any self-serve tool can — here's what you get.</p>
+        <div class="grid">
+            <div class="card benefit-card">
+                <div class="icon-badge">💰</div>
+                <h3>Cost Reduction</h3>
+                <p>We help you identify opportunities for cost reduction across multiple areas of the business — not generic tips, but findings specific to how you actually operate.</p>
+            </div>
+            <div class="card benefit-card">
+                <div class="icon-badge">🩺</div>
+                <h3>Overall Maturity Health Check</h3>
+                <p>A full health check of your business across its core areas, delivered with the context and nuance only a real conversation can surface.</p>
+            </div>
+            <div class="card benefit-card">
+                <div class="icon-badge">📈</div>
+                <h3>Revenue Growth</h3>
+                <p>We dig into the gaps, bottlenecks, and missed opportunities holding back growth, and prioritize them by impact.</p>
+            </div>
+            <div class="card benefit-card">
+                <div class="icon-badge">🗺️</div>
+                <h3>Business Case &amp; Implementation Plan</h3>
+                <p>A high-level business case and a systematic plan for tackling improvements — sequenced, resourced, and ready to execute, not just a list of findings.</p>
+            </div>
+        </div>
+    </div>
 
     <div class="connect-grid">
         <div class="panel" id="schedule">
             <h2>Schedule a 15-Minute Consultation</h2>
-            <p style="color:var(--muted);font-size:0.92rem;">Pick a time that works for you — no commitment, just a conversation about your assessment needs.</p>
+            <p style="color:var(--muted);font-size:0.92rem;">Pick a time that works for you — no commitment, just a conversation about where you're trying to get to and how a personalized assessment gets you there.</p>
             <div class="calendly-placeholder">
                 Calendly scheduling will be embedded here.<br>
                 <span style="font-size:0.85rem;">(Set your Calendly link to enable live booking.)</span>
@@ -51,7 +96,8 @@
         </div>
 
         <div class="panel" id="contact">
-            <h2>Send Us a Message</h2>
+            <h2>Get a Personalized Assessment</h2>
+            <p style="color:var(--muted);font-size:0.92rem;margin-bottom:1rem;">Tell us a bit about your organization and what you're trying to bridge the gap on — we'll follow up to scope a facilitated assessment.</p>
             <form id="leadForm">
                 <div class="form-group">
                     <label for="leadName">Full Name *</label>
@@ -67,17 +113,17 @@
                 </div>
                 <div class="form-group">
                     <label for="leadMessage">How can we help?</label>
-                    <textarea id="leadMessage" rows="4" maxlength="2000"></textarea>
+                    <textarea id="leadMessage" rows="4" maxlength="2000" placeholder="e.g. We want a maturity baseline before a 2027 transformation push"></textarea>
                 </div>
                 <div class="form-error" id="leadFormError"></div>
                 <div class="form-status" id="leadFormStatus"></div>
-                <button type="submit" class="btn btn-primary" id="leadSubmitBtn" style="width:100%;">Send Message</button>
+                <button type="submit" class="btn btn-primary" id="leadSubmitBtn" style="width:100%;">Request a Personalized Assessment</button>
             </form>
         </div>
     </div>
 </div>
 
-<footer><p>&copy; 2026 KVH Assessment Platform.</p></footer>
+<footer><p>&copy; 2026 MaturityAssess.</p></footer>
 <button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
 
 <script>
@@ -116,7 +162,7 @@ leadForm.addEventListener('submit', async (e) => {
         leadFormError.classList.add('visible');
     } finally {
         leadSubmitBtn.disabled = false;
-        leadSubmitBtn.textContent = 'Send Message';
+        leadSubmitBtn.textContent = 'Request a Personalized Assessment';
     }
 });
 </script>

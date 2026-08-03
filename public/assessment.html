@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Start Your Assessment — KVH</title>
+<title>Start Your Assessment — MaturityAssess</title>
 <link rel="stylesheet" href="/style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
@@ -58,8 +58,19 @@
     .score-card .val { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
     .score-card .lbl { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-top: 0.3rem; }
     .chart-wrap { position: relative; height: 320px; margin-bottom: 2rem; }
-    .cat-row { border-left: 4px solid var(--accent); background: var(--light); border-radius: 0 8px 8px 0; padding: 1rem; margin-bottom: 0.75rem; }
-    .cat-row .cat-head { display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+    .cat-row {
+        display: flex; gap: 1rem; background: white; border: 1px solid var(--border);
+        border-radius: 12px; padding: 1.25rem; margin-bottom: 0.9rem; box-shadow: 0 2px 10px rgba(15,58,125,0.04);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .cat-row:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(15,58,125,0.1); }
+    .cat-icon {
+        flex-shrink: 0; width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+        font-size: 1.3rem; background: linear-gradient(135deg, var(--light-accent), #fff); box-shadow: 0 3px 10px rgba(15,58,125,0.08);
+    }
+    .cat-body { flex: 1; min-width: 0; }
+    .cat-row .cat-head { display: flex; justify-content: space-between; align-items: center; font-weight: 700; gap: 0.75rem; }
+    .cat-score-pill { flex-shrink: 0; font-size: 0.78rem; font-weight: 800; padding: 0.25rem 0.65rem; border-radius: 999px; background: var(--light-accent); color: var(--primary); }
     .cat-row p { color: var(--muted); font-size: 0.9rem; margin-top: 0.4rem; }
     .explain-btn { font-size: 0.78rem; color: var(--accent); background: none; border: none; cursor: pointer; padding: 0; font-weight: 600; }
     .explain-text { display: none; margin-top: 0.5rem; font-size: 0.85rem; color: var(--primary); background: var(--light-accent); padding: 0.6rem 0.75rem; border-radius: 6px; }
@@ -73,7 +84,7 @@
 <div class="scroll-progress" id="scrollProgress"></div>
 <nav id="mainNav">
     <div class="nav-container">
-        <a href="/" class="logo">🛡️ KVH</a>
+        <a href="/" class="logo">📊 MaturityAssess</a>
         <div class="nav-group">
             <div class="nav-dropdown">
                 <button class="nav-dropdown-btn">Industries <span class="caret">▾</span></button>
@@ -108,7 +119,7 @@
 <script src="/app.js"></script>
 
 <footer>
-    <p>&copy; 2026 KVH Assessment Platform.</p>
+    <p>&copy; 2026 MaturityAssess.</p>
     <p style="margin-top:1rem;opacity:0.7;font-size:0.9rem;"><a href="/">Home</a> · <a href="/connect">Connect With Us</a> · <a href="/dashboard">Dashboard</a></p>
 </footer>
 <button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
@@ -408,13 +419,23 @@ function renderResults() {
         </div>
     `;
 
+    const CATEGORY_ICONS = ['📄', '🔐', '⚙️', '👥', '⚖️', '🧭', '📈', '🗂️', '🎯', '🧩', '🛠️', '✅'];
+    const iconFor = (label) => {
+        let hash = 0;
+        for (let i = 0; i < label.length; i++) hash = (hash * 31 + label.charCodeAt(i)) >>> 0;
+        return CATEGORY_ICONS[hash % CATEGORY_ICONS.length];
+    };
+
     document.getElementById('categoryList').innerHTML = score.category_scores.map((c) => `
         <div class="cat-row">
-            <div class="cat-head"><span>${escapeHtml(c.category)}</span><span>${c.score}/5</span></div>
-            <p>${escapeHtml(c.insight)}</p>
-            <p><strong>Recommendation:</strong> ${escapeHtml(c.recommendation)}</p>
-            <button class="explain-btn" data-category="${escapeHtml(c.category)}">Why this score? →</button>
-            <div class="explain-text"></div>
+            <div class="cat-icon">${iconFor(c.category)}</div>
+            <div class="cat-body">
+                <div class="cat-head"><span>${escapeHtml(c.category)}</span><span class="cat-score-pill">${c.score}/5</span></div>
+                <p>${escapeHtml(c.insight)}</p>
+                <p><strong>Recommendation:</strong> ${escapeHtml(c.recommendation)}</p>
+                <button class="explain-btn" data-category="${escapeHtml(c.category)}">Why this score? →</button>
+                <div class="explain-text"></div>
+            </div>
         </div>
     `).join('');
 
