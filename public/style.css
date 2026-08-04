@@ -164,10 +164,10 @@ button:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); out
 .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ---------------- Layout helpers ---------------- */
-section { max-width: 1400px; margin: 0 auto; padding: 4rem 2rem; }
+section { max-width: 1400px; margin: 0 auto; padding: 5.5rem 2rem; }
 .section-narrow { max-width: 900px; }
-section h2 { font-size: 2.3rem; font-weight: 800; margin-bottom: 1rem; color: var(--primary); text-align: center; }
-.section-subtitle { text-align: center; color: var(--muted); font-size: 1.05rem; max-width: 640px; margin: 0 auto 2.5rem; }
+section h2 { font-size: 2.6rem; font-weight: 800; margin-bottom: 1.1rem; color: var(--primary); text-align: center; letter-spacing: -0.01em; }
+.section-subtitle { text-align: center; color: var(--muted); font-size: 1.1rem; max-width: 660px; margin: 0 auto 3rem; }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
 
@@ -194,6 +194,21 @@ section h2 { font-size: 2.3rem; font-weight: 800; margin-bottom: 1rem; color: va
 }
 .back-to-top.visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
 .back-to-top:hover { transform: translateY(-4px) scale(1.08); }
+
+/* ---------------- Sticky in-page section nav ---------------- */
+.subnav {
+    position: sticky; top: 0; z-index: 90; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); opacity: 0; transform: translateY(-100%); transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+}
+.subnav.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.subnav-inner { max-width: 1400px; margin: 0 auto; padding: 0.75rem 2rem; display: flex; gap: 1.75rem; overflow-x: auto; }
+.subnav a { text-decoration: none; color: var(--muted); font-size: 0.88rem; font-weight: 600; white-space: nowrap; position: relative; padding-bottom: 4px; }
+.subnav a.active { color: var(--primary); }
+.subnav a.active::after { content: ''; position: absolute; left: 0; right: 0; bottom: -0.75rem; height: 2px; background: var(--accent); }
+
+/* ---------------- Animated counters ---------------- */
+.counter { display: inline-block; }
 
 /* ---------------- Forms ---------------- */
 .form-group { margin-bottom: 1.25rem; }

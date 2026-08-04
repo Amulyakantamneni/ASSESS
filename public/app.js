@@ -90,4 +90,68 @@ document.addEventListener('DOMContentLoaded', () => {
             ).join('') || '<span class="menu-group-label">No industries yet</span>';
         }).catch(() => {});
     }
+
+    // ---------------- Animated counters ----------------
+    // Usage: <span class="counter" data-target="82" data-suffix="%">0</span>
+    const counters = document.querySelectorAll('.counter[data-target]');
+    const counterObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            counterObserver.unobserve(entry.target);
+            const el = entry.target;
+            const target = parseFloat(el.dataset.target);
+            const suffix = el.dataset.suffix || '';
+            const decimals = el.dataset.decimals ? parseInt(el.dataset.decimals, 10) : 0;
+            const duration = 1200;
+            const start = performance.now();
+            function tick(now) {
+                const progress = Math.min(1, (now - start) / duration);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = (target * eased).toFixed(decimals) + suffix;
+                if (progress < 1) requestAnimationFrame(tick);
+                else el.textContent = target.toFixed(decimals) + suffix;
+            }
+            requestAnimationFrame(tick);
+        });
+    }, { threshold: 0.4 });
+    counters.forEach((el) => counterObserver.observe(el));
+
+    // ---------------- Smooth accordion helper ----------------
+    // Toggles max-height using the real scrollHeight so content of any length animates cleanly.
+    window.toggleAccordion = function (bodyEl, open) {
+        if (open) {
+            bodyEl.style.maxHeight = bodyEl.scrollHeight + 'px';
+        } else {
+            bodyEl.style.maxHeight = '0px';
+        }
+    };
+
+    // ---------------- Sticky in-page section nav ----------------
+    const subnav = document.querySelector('.subnav');
+    if (subnav) {
+        const mainNavEl = document.getElementById('mainNav');
+        function positionSubnav() {
+            subnav.style.top = (mainNavEl ? mainNavEl.offsetHeight : 0) + 'px';
+        }
+        positionSubnav();
+        window.addEventListener('resize', positionSubnav);
+
+        const subnavLinks = subnav.querySelectorAll('a[href^="#"]');
+        const subnavTargets = Array.from(subnavLinks)
+            .map((a) => document.querySelector(a.getAttribute('href')))
+            .filter(Boolean);
+        const heroEl = document.querySelector('.hero');
+
+        function onSubnavScroll() {
+            const scrollTop = window.scrollY;
+            subnav.classList.toggle('visible', heroEl ? scrollTop > heroEl.offsetHeight * 0.6 : scrollTop > 200);
+            let activeIndex = -1;
+            subnavTargets.forEach((section, i) => {
+                if (section.getBoundingClientRect().top <= 140) activeIndex = i;
+            });
+            subnavLinks.forEach((a, i) => a.classList.toggle('active', i === activeIndex));
+        }
+        window.addEventListener('scroll', onSubnavScroll, { passive: true });
+        onSubnavScroll();
+    }
 });

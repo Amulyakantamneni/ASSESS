@@ -2,8 +2,13 @@
 # Generates the narrative report via Claude, and renders it (plus the
 # scorecard) into a downloadable .docx via python-docx.
 
+import io
 from datetime import datetime, timezone
 from pathlib import Path
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 from docx import Document
 from docx.shared import Pt, Inches, RGBColor
@@ -18,6 +23,51 @@ REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 NAVY = RGBColor(0x0F, 0x3A, 0x7D)
 GREY = RGBColor(0x6B, 0x72, 0x80)
+
+NAVY_HEX = "#0F3A7D"
+GREEN_HEX = "#10B981"
+AMBER_HEX = "#F59E0B"
+RED_HEX = "#EF4444"
+
+
+def _score_color(score: float) -> str:
+    if score >= 4:
+        return GREEN_HEX
+    if score >= 2.5:
+        return AMBER_HEX
+    return RED_HEX
+
+
+def _category_chart_image(category_scores: list) -> io.BytesIO:
+    """Renders a horizontal bar chart of per-category scores (0-5 scale) as a PNG."""
+    labels = [str(c.get("category", "")) for c in category_scores][::-1]
+    scores = [float(c.get("score", 0) or 0) for c in category_scores][::-1]
+    colors = [_score_color(s) for s in scores]
+
+    fig_height = max(2.2, 0.5 * len(labels) + 0.6)
+    fig, ax = plt.subplots(figsize=(7.5, fig_height), dpi=150)
+    bars = ax.barh(labels, scores, color=colors, height=0.6)
+
+    for bar, score in zip(bars, scores):
+        ax.text(min(score + 0.12, 4.75), bar.get_y() + bar.get_height() / 2, f"{score:.1f}",
+                va="center", fontsize=9, color="#1F2937")
+
+    ax.set_xlim(0, 5)
+    ax.set_xlabel("Score (0 to 5)", fontsize=9, color="#6B7280")
+    ax.tick_params(axis="y", labelsize=9.5, colors="#1F2937")
+    ax.tick_params(axis="x", labelsize=8.5, colors="#6B7280")
+    for spine in ("top", "right", "left"):
+        ax.spines[spine].set_visible(False)
+    ax.spines["bottom"].set_color("#E5E7EB")
+    ax.set_axisbelow(True)
+    ax.xaxis.grid(True, color="#E5E7EB", linewidth=0.7)
+    fig.tight_layout()
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight")
+    plt.close(fig)
+    buf.seek(0)
+    return buf
 
 
 def generate_report(industry: str, standard: str, template_name: str, scorecard: dict) -> GeneratedReport:
@@ -86,6 +136,13 @@ def render_docx(*, assessment_id: str, industry: str, standard: str, template_na
 
     # Category breakdown
     _heading(doc, "Assessment Results by Category")
+    category_scores = scorecard.get("category_scores", [])
+    if category_scores:
+        chart_img = _category_chart_image(category_scores)
+        chart_p = doc.add_paragraph()
+        chart_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        chart_p.add_run().add_picture(chart_img, width=Inches(6))
+
     cat_table = doc.add_table(rows=1, cols=4)
     cat_table.style = "Light Grid Accent 1"
     chdr = cat_table.rows[0].cells
