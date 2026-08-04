@@ -10,13 +10,9 @@
         width: 100%; padding: 6rem 2rem 5.5rem; position: relative; overflow: hidden;
     }
     .hero-slideshow {
-        position: absolute; inset: 0; pointer-events: none; z-index: 0;
-        -webkit-mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,0.4) 30%, transparent 62%),
-                             radial-gradient(ellipse at center, black 0%, transparent 72%);
-        -webkit-mask-composite: source-in;
-        mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,0.4) 30%, transparent 62%),
-                    radial-gradient(ellipse at center, black 0%, transparent 72%);
-        mask-composite: intersect;
+        position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+        -webkit-mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,0.5) 35%, transparent 70%);
+        mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,0.5) 35%, transparent 70%);
     }
     .hero-slide {
         position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
@@ -29,18 +25,18 @@
     .hero-slide:nth-child(5) { animation-delay: 24s; }
     @keyframes heroSlideFade {
         0% { opacity: 0; transform: scale(1.04); }
-        4% { opacity: 0.55; transform: scale(1.01); }
-        16% { opacity: 0.55; transform: scale(1); }
+        4% { opacity: 0.85; transform: scale(1.01); }
+        16% { opacity: 0.85; transform: scale(1); }
         20% { opacity: 0; transform: scale(0.99); }
         100% { opacity: 0; }
     }
     @media (prefers-reduced-motion: reduce) {
         .hero-slide { animation: none; opacity: 0; }
-        .hero-slide:first-child { opacity: 0.5; }
+        .hero-slide:first-child { opacity: 0.8; }
     }
     .hero-photo-wash {
         position: absolute; inset: 0; pointer-events: none; z-index: 0;
-        background: linear-gradient(180deg, rgba(248,250,252,0.35) 0%, rgba(248,250,252,0.72) 45%, rgba(248,250,252,0.96) 75%, #f8fafc 100%);
+        background: linear-gradient(180deg, rgba(248,250,252,0.08) 0%, rgba(248,250,252,0.35) 40%, rgba(248,250,252,0.85) 68%, #f8fafc 100%);
     }
     .hero-grid-bg {
         position: absolute; inset: 0; pointer-events: none; z-index: 0;
