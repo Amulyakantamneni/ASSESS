@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: maturityassess
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD_HASH
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: NOTIFY_EMAIL
+        sync: false
+      - key: AI_REPORTS_PER_DAY
+        value: "2"
