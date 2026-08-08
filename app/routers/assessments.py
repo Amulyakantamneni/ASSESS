@@ -5,17 +5,18 @@
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.db.models import Assessment, AssessmentTemplate, Standard, Industry, Response as ResponseModel, Score, Report
+from app.db.models import Assessment, AssessmentTemplate, Standard, Industry, Response as ResponseModel, Score, Report, Evidence
 from app.schemas import (
     StartAssessmentRequest, StartAssessmentResponse, QuestionOut, QuestionOption,
     SubmitAssessmentRequest, AssessmentResultOut, ScoreOut, ReportOut, Roadmap,
     ExplainScoreRequest, ExplainScoreResponse, ResponseDetail,
+    AssessmentSummaryOut, AssessmentHistoryOut,
 )
 from app.ai.question_generator import generate_questions
 from app.ai.scoring_engine import generate_scorecard
@@ -35,6 +36,38 @@ async def _load_chain(db: AsyncSession, template_id: str):
     standard = await db.get(Standard, template.standard_id)
     industry = await db.get(Industry, standard.industry_id)
     return template, standard, industry
+
+
+@router.get("", response_model=AssessmentHistoryOut)
+async def list_assessments(email: str = Query(...), db: AsyncSession = Depends(get_db)):
+    """Assessment history, looked up by the same self-reported email the premium
+    tier already uses as its only identifier — there is no end-user account system
+    in this app, so email is the sole (unverified) key, exactly as elsewhere."""
+    normalized = email.strip().lower()
+    if not normalized:
+        raise HTTPException(400, "Email is required.")
+
+    rows = (
+        await db.execute(
+            select(Assessment)
+            .where(Assessment.email == normalized, Assessment.status == "completed")
+            .order_by(Assessment.completed_at.desc())
+        )
+    ).scalars().all()
+
+    summaries = []
+    for a in rows:
+        template, standard, industry = await _load_chain(db, a.template_id)
+        score = (await db.execute(select(Score).where(Score.assessment_id == a.id))).scalar_one_or_none()
+        gap_count = sum(1 for c in (score.category_scores if score else []) if c.get("gap", 0) > 0)
+        summaries.append(AssessmentSummaryOut(
+            assessment_id=a.id, template_name=template.name, industry_name=industry.name,
+            standard_name=standard.name, standard_id=standard.id, tier=a.tier,
+            completed_at=a.completed_at, overall_score=score.overall_score if score else None,
+            maturity_level=score.maturity_level if score else None, gap_count=gap_count,
+        ))
+
+    return AssessmentHistoryOut(assessments=summaries)
 
 
 @router.post("/start", response_model=StartAssessmentResponse, status_code=201)
@@ -244,6 +277,7 @@ async def _build_result(db: AsyncSession, assessment_id: str) -> AssessmentResul
         template_name=template.name,
         industry_name=industry.name,
         standard_name=standard.name,
+        standard_id=standard.id,
         tier=assessment.tier,
         completed_at=assessment.completed_at,
         score=score_out,
@@ -269,6 +303,68 @@ async def download_report(assessment_id: str, db: AsyncSession = Depends(get_db)
         report.docx_file_path,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         filename=f"assessment-report-{assessment_id}.docx",
+    )
+
+
+REPORT_TYPES = {"executive", "compliance", "technical", "remediation", "evidence"}
+
+
+@router.get("/{assessment_id}/report/{report_type}.docx")
+async def download_report_by_type(assessment_id: str, report_type: str, db: AsyncSession = Depends(get_db)):
+    if report_type not in REPORT_TYPES:
+        raise HTTPException(404, "Unknown report type.")
+
+    assessment = await db.get(Assessment, assessment_id)
+    if not assessment:
+        raise HTTPException(404, "Assessment not found.")
+
+    if report_type == "executive":
+        # Unchanged behavior: serves the pre-generated premium-only report as before.
+        return await download_report(assessment_id, db)
+
+    score = (await db.execute(select(Score).where(Score.assessment_id == assessment_id))).scalar_one_or_none()
+    if not score:
+        raise HTTPException(404, "This assessment has no score yet.")
+
+    template, standard, industry = await _load_chain(db, assessment.template_id)
+    scorecard = {
+        "overall_score": score.overall_score, "maturity_level": score.maturity_level,
+        "compliance_pct": score.compliance_pct, "risk_rating": score.risk_rating,
+        "strengths": score.strengths, "gaps": score.gaps, "category_scores": score.category_scores,
+    }
+
+    questions_by_id = {q["id"]: q for q in (assessment.questions_snapshot or [])}
+    response_rows = (await db.execute(select(ResponseModel).where(ResponseModel.assessment_id == assessment_id))).scalars().all()
+    responses = []
+    for r in response_rows:
+        q = questions_by_id.get(r.question_id)
+        if not q:
+            continue
+        responses.append({"category": q["category"], "question_text": q["question_text"], "answer": r.answer})
+
+    evidence_rows = (await db.execute(select(Evidence).where(Evidence.assessment_id == assessment_id))).scalars().all()
+    evidence_items = [
+        {"category": e.category, "file_name": e.file_name, "status": e.status, "description": e.description}
+        for e in evidence_rows
+    ]
+
+    common = dict(
+        assessment_id=assessment_id, industry=industry.name, standard=standard.name,
+        template_name=template.name, scorecard=scorecard, email=assessment.email,
+    )
+    if report_type == "compliance":
+        path = report_generator.render_compliance_docx(**common, responses=responses, evidence_items=evidence_items)
+    elif report_type == "technical":
+        path = report_generator.render_technical_docx(**common, evidence_items=evidence_items)
+    elif report_type == "remediation":
+        path = report_generator.render_remediation_docx(**common)
+    else:
+        path = report_generator.render_evidence_docx(**common, evidence_items=evidence_items)
+
+    return FileResponse(
+        path,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        filename=f"{report_type}-report-{assessment_id}.docx",
     )
 
 

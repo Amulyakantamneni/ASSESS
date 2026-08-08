@@ -168,6 +168,54 @@
     .results-cta h4 { font-size: 1.15rem; margin-bottom: 0.4rem; }
     .results-cta p { color: rgba(255,255,255,0.9); font-size: 0.9rem; margin-bottom: 1.1rem; }
 
+    /* Evidence status pills */
+    .evidence-status-pill { display: inline-block; font-size: 0.72rem; font-weight: 800; padding: 0.22rem 0.6rem; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.02em; }
+    .evidence-status-pill.verified { background: rgba(16,185,129,0.14); color: #10b981; }
+    .evidence-status-pill.self_reported { background: rgba(59,130,246,0.14); color: #3b82f6; }
+    .evidence-status-pill.partial { background: rgba(245,158,11,0.14); color: #f59e0b; }
+    .evidence-status-pill.none { background: var(--light); color: var(--muted); }
+
+    /* Evidence list items + upload form */
+    .evidence-file-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem 0.75rem; background: var(--light); border-radius: 8px; padding: 0.65rem 0.85rem; margin-bottom: 0.5rem; }
+    .evidence-file-row .ef-name { font-weight: 600; color: var(--dark); font-size: 0.87rem; }
+    .evidence-file-row .ef-meta { color: var(--muted); font-size: 0.78rem; }
+    .evidence-upload-form { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; margin-top: 0.9rem; padding-top: 0.9rem; border-top: 1px solid var(--border); }
+    .evidence-upload-form .form-group { margin-bottom: 0; flex: 1; min-width: 160px; }
+    .evidence-upload-status { font-size: 0.82rem; margin-top: 0.5rem; }
+
+    /* History */
+    .history-lookup-row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 0.5rem; }
+    .history-item { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem 1rem; background: white; border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 0.7rem; cursor: pointer; transition: border-color 0.2s ease; }
+    .history-item:hover { border-color: var(--accent); }
+    .history-item .hi-main strong { color: var(--dark); }
+    .history-item .hi-meta { color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .history-item .hi-stats { display: flex; gap: 0.6rem; flex-shrink: 0; }
+    .history-item .hi-stat { text-align: center; }
+    .history-item .hi-stat .hs-val { font-weight: 800; color: var(--primary); font-size: 1.1rem; }
+    .history-item .hi-stat .hs-lbl { color: var(--muted); font-size: 0.68rem; text-transform: uppercase; }
+    .history-compare-btn { margin-top: 1rem; }
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+    @media (max-width: 640px) { .compare-grid { grid-template-columns: 1fr; } }
+    .compare-col { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; text-align: center; }
+    .compare-col .cc-lbl { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .compare-col .cc-val { font-weight: 800; color: var(--primary); font-size: 1.3rem; }
+    .delta-up { color: #10b981; font-weight: 700; }
+    .delta-down { color: #ef4444; font-weight: 700; }
+    .delta-flat { color: var(--muted); font-weight: 700; }
+    .compare-cat-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+    .compare-cat-row:last-child { border-bottom: none; }
+
+    /* Reports */
+    .report-btn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
+    .report-btn { display: block; text-align: left; background: white; border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem; text-decoration: none; transition: all 0.2s ease; }
+    .report-btn:hover { border-color: var(--accent); box-shadow: 0 8px 20px rgba(15,58,125,0.08); transform: translateY(-2px); }
+    .report-btn.disabled { opacity: 0.5; pointer-events: none; }
+    .report-btn .rb-title { font-weight: 700; color: var(--primary); font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .report-btn .rb-desc { color: var(--muted); font-size: 0.8rem; }
+
+    /* Crosswalk unavailable */
+    .crosswalk-row { display: flex; justify-content: space-between; align-items: center; background: white; border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1rem; margin-bottom: 0.5rem; font-size: 0.88rem; }
+
     /* Shared detail modal */
     .detail-modal-overlay {
         position: fixed; inset: 0; background: rgba(15,23,42,0.55); z-index: 2000;
@@ -224,6 +272,20 @@
     </div>
 </nav>
 
+<div class="subnav" id="resultsSubnav" style="display:none;">
+    <div class="subnav-inner">
+        <a href="#overview">Overview</a>
+        <a href="#categories">Categories</a>
+        <a href="#gaps">Gaps</a>
+        <a href="#priorities">Priorities</a>
+        <a href="#risks">Risks</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#framework-mapping">Framework Mapping</a>
+        <a href="#history">History</a>
+        <a href="#reports">Reports</a>
+    </div>
+</div>
+
 <div class="flow-wrap">
     <div class="stepper" id="stepper"></div>
     <div id="panelHost"></div>
@@ -248,6 +310,7 @@ let state = {
 };
 let radarChart = null;
 let riskChart = null;
+let currentEvidenceItems = []; // populated once /evidence loads; read by categoryDetailHtml for all category modals
 
 const panelHost = document.getElementById('panelHost');
 
@@ -258,7 +321,14 @@ function renderStepper() {
     }).join('');
 }
 
-function goTo(step) { state.step = step; renderStepper(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+function goTo(step) {
+    state.step = step;
+    renderStepper();
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const subnav = document.getElementById('resultsSubnav');
+    if (subnav) subnav.style.display = step === 4 ? '' : 'none';
+}
 
 async function render() {
     renderStepper();
@@ -574,6 +644,19 @@ function riskImpact(score) { return score < 2.5 ? 'High' : score < 3.5 ? 'Medium
 function riskLikelihood(gap) { return gap >= 2.5 ? 'High' : gap >= 1.5 ? 'Medium' : 'Low'; }
 const RISK_TAG_COLOR = { High: '#ef4444', Medium: '#f59e0b', Low: '#10b981' };
 
+// Evidence status is never auto-upgraded to "verified" client-side — only the
+// admin-verify endpoint can do that. "none" here just means nothing was uploaded.
+function evidenceStatusForCategory(category, evidenceItems) {
+    const items = (evidenceItems || []).filter((e) => e.category === category);
+    if (!items.length) return 'none';
+    if (items.some((e) => e.status === 'verified')) return 'verified';
+    if (items.some((e) => e.status === 'partial')) return 'partial';
+    return 'self_reported';
+}
+function evidenceStatusLabel(status) {
+    return { verified: 'Verified Evidence', self_reported: 'Self-Reported', partial: 'Partial Evidence', none: 'No Evidence' }[status] || 'No Evidence';
+}
+
 // ---------------- Shared detail modal (used by heatmap cells, strengths/weaknesses, risk points) ----------------
 function openDetailModal(title, bodyHtml) {
     let overlay = document.getElementById('detailModalOverlay');
@@ -605,14 +688,20 @@ function categoryDetailHtml(c, r) {
     const lvl = MATURITY_LEVELS[levelIndexForScore(c.score)];
     const priority = priorityForGap(c.gap);
     const questions = (r.responses || []).filter((x) => x.category === c.category);
+    const evStatus = evidenceStatusForCategory(c.category, currentEvidenceItems);
+    const evItems = currentEvidenceItems.filter((e) => e.category === c.category);
     return `
         <div class="dm-row"><span>Score</span><strong>${c.score}/5</strong></div>
         <div class="dm-row"><span>Derived level</span><strong>L${levelIndexForScore(c.score) + 1} — ${escapeHtml(lvl.name)}</strong></div>
         <div class="dm-row"><span>Priority</span><strong>${priority.label}</strong></div>
+        <div class="dm-row"><span>Evidence</span><strong><span class="evidence-status-pill ${evStatus}">${evidenceStatusLabel(evStatus)}</span></strong></div>
         <p style="margin-top:1rem;"><strong>Insight:</strong> ${escapeHtml(c.insight)}</p>
         <p><strong>Recommendation:</strong> ${escapeHtml(c.recommendation)}</p>
         ${questions.length ? `<p style="margin-top:1rem;"><strong>Related assessment questions</strong></p>${questions.map((q) => `
             <div class="dm-qa"><div class="dm-q">${escapeHtml(q.question_text)}</div><div class="dm-a">${escapeHtml(q.answer && (q.answer.label || q.answer.text) || 'No answer recorded')}</div></div>
+        `).join('')}` : ''}
+        ${evItems.length ? `<p style="margin-top:1rem;"><strong>Evidence files</strong></p>${evItems.map((e) => `
+            <div class="dm-qa"><div class="dm-q">${escapeHtml(e.file_name)}</div><div class="dm-a">${escapeHtml(e.description || 'No description')} · ${escapeHtml(evidenceStatusLabel(e.status))}</div></div>
         `).join('')}` : ''}
     `;
 }
@@ -663,7 +752,7 @@ function renderResults() {
             <h2>Your Results</h2>
             <p class="hint">${escapeHtml(r.industry_name)} · ${escapeHtml(r.standard_name)} · ${escapeHtml(r.template_name)}</p>
 
-            <div class="results-level">
+            <div class="results-level" id="overview">
                 <div class="level-name">${escapeHtml(score.maturity_level)}</div>
                 <p style="margin-top:0.5rem;color:var(--muted);">
                     Overall Score: ${score.overall_score}/100
@@ -712,7 +801,7 @@ function renderResults() {
                 </div>
             </div>
 
-            <div class="results-section">
+            <div class="results-section" id="categories">
                 <h3>Category Maturity Heatmap</h3>
                 <p class="section-note">Click any category for the full breakdown.</p>
                 <div class="viz-tabs">
@@ -732,19 +821,19 @@ function renderResults() {
                 </div>
             </div>
 
-            <div class="results-section">
+            <div class="results-section" id="gaps">
                 <h3>Gap Analysis</h3>
                 <p class="section-note">The most important gaps identified from your responses.</p>
                 <div id="gapAnalysisList"></div>
             </div>
 
-            <div class="results-section">
+            <div class="results-section" id="priorities">
                 <h3>Top Priorities</h3>
                 <p class="section-note">The highest-value remediation opportunities, ranked.</p>
                 <div id="priorityList"></div>
             </div>
 
-            <div class="results-section">
+            <div class="results-section" id="risks">
                 <h3>Risk Overview</h3>
                 <p class="section-note">
                     A qualitative likelihood-vs-impact view, derived from category score and gap size — not a quantitative risk score.
@@ -756,6 +845,22 @@ function renderResults() {
                 </div>
             </div>
 
+            <div class="results-section" id="evidence">
+                <h3>Evidence</h3>
+                <p class="section-note">Upload supporting documents for any assessed category — policies, SOPs, audit reports, certifications, or other documentation. Uploading marks evidence as provided, not automatically verified.</p>
+                <div id="evidenceCategoryList"></div>
+            </div>
+
+            <div class="results-section" id="framework-mapping">
+                <h3>Requirement &rarr; Evidence &rarr; Gap Mapping</h3>
+                <p class="section-note">How each assessed category traces from what was asked through to evidence, maturity, gap, and recommendation. Click a category for the full mapping.</p>
+                <div id="mappingList"></div>
+
+                <h3 style="margin-top:2.75rem;">Framework Coverage</h3>
+                <p class="section-note">How this assessment relates to other supported frameworks.</p>
+                <div id="crosswalkBox"></div>
+            </div>
+
             <div class="results-section">
                 <h3>Explain My Score</h3>
                 <div class="ai-explain-box">
@@ -763,6 +868,25 @@ function renderResults() {
                     <button class="btn btn-secondary" id="explainScoreBtn" style="margin-top:1rem;">Explain My Score</button>
                     <div class="ai-explain-text" id="aiExplainText"></div>
                 </div>
+            </div>
+
+            <div class="results-section" id="history">
+                <h3>Assessment History</h3>
+                <p class="section-note">Look up previous completed assessments by the email you provided when starting one.</p>
+                <div class="history-lookup-row">
+                    <div class="form-group" style="margin-bottom:0;flex:1;">
+                        <label for="historyEmailInput">Email</label>
+                        <input type="email" id="historyEmailInput" placeholder="you@company.com" value="${escapeHtml(state.email || '')}" />
+                    </div>
+                    <button class="btn btn-secondary" id="historyLookupBtn">Look Up History</button>
+                </div>
+                <div id="historyResults" style="margin-top:1.5rem;"></div>
+            </div>
+
+            <div class="results-section" id="reports">
+                <h3>Generate Report</h3>
+                <p class="section-note">Choose a report format tailored to your audience.</p>
+                <div id="reportButtons" class="report-btn-grid"></div>
             </div>
 
             <div class="results-section">
@@ -976,6 +1100,300 @@ function renderResults() {
                 (weak.length ? ` The score was reduced primarily by gaps in ${weak.join(' and ')}.` : '');
         }
     });
+
+    // Evidence + Mapping (evidence loads async, then both sections render)
+    loadEvidenceAndRender(catScores, r);
+
+    // Framework Coverage
+    renderCrosswalkSection(r);
+
+    // Assessment History
+    wireHistorySection(r);
+
+    // Reports selector
+    renderReportsSection(r);
+}
+
+async function loadEvidenceAndRender(catScores, r) {
+    try {
+        const res = await fetch(`${API_BASE}/assessments/${r.assessment_id}/evidence`);
+        currentEvidenceItems = res.ok ? await res.json() : [];
+    } catch {
+        currentEvidenceItems = [];
+    }
+    renderEvidenceSection(catScores, r);
+    renderMappingSection(catScores, r);
+}
+
+function renderEvidenceSection(catScores, r) {
+    const host = document.getElementById('evidenceCategoryList');
+    host.innerHTML = catScores.map((c, i) => {
+        const status = evidenceStatusForCategory(c.category, currentEvidenceItems);
+        const items = currentEvidenceItems.filter((e) => e.category === c.category);
+        return `
+            <div class="gap-card" data-evidence-idx="${i}">
+                <button class="gap-card-head">
+                    <span class="evidence-status-pill ${status}">${evidenceStatusLabel(status)}</span>
+                    <span class="gc-title">${escapeHtml(c.category)}</span>
+                    <span class="gc-caret">▾</span>
+                </button>
+                <div class="gap-card-body">
+                    <div class="gap-card-inner">
+                        ${items.length ? items.map((e) => `
+                            <div class="evidence-file-row">
+                                <div><div class="ef-name">${escapeHtml(e.file_name)}</div><div class="ef-meta">${escapeHtml(e.description || '')}</div></div>
+                                <div style="text-align:right;">
+                                    <span class="evidence-status-pill ${e.status}">${evidenceStatusLabel(e.status)}</span>
+                                    <div class="ef-meta">${new Date(e.uploaded_at).toLocaleDateString()}</div>
+                                </div>
+                            </div>
+                        `).join('') : '<p class="hint">No evidence uploaded for this category yet.</p>'}
+                        <form class="evidence-upload-form" data-category="${escapeHtml(c.category)}">
+                            <div class="form-group">
+                                <label>Upload File</label>
+                                <input type="file" name="file" required accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt" />
+                            </div>
+                            <div class="form-group">
+                                <label>Description (optional)</label>
+                                <input type="text" name="description" placeholder="e.g. Q3 access review policy" />
+                            </div>
+                            <button type="submit" class="btn btn-secondary btn-sm">Upload</button>
+                        </form>
+                        <div class="evidence-upload-status"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    host.querySelectorAll('.gap-card-head').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.gap-card');
+            const opening = !card.classList.contains('open');
+            host.querySelectorAll('.gap-card.open').forEach((c) => { c.classList.remove('open'); toggleAccordion(c.querySelector('.gap-card-body'), false); });
+            if (opening) { card.classList.add('open'); toggleAccordion(card.querySelector('.gap-card-body'), true); }
+        });
+    });
+
+    host.querySelectorAll('.evidence-upload-form').forEach((form) => {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const statusEl = form.nextElementSibling;
+            const fileInput = form.querySelector('input[type="file"]');
+            if (!fileInput.files.length) return;
+            const fd = new FormData();
+            fd.append('category', form.dataset.category);
+            fd.append('description', form.querySelector('input[name="description"]').value);
+            fd.append('file', fileInput.files[0]);
+            statusEl.textContent = 'Uploading…';
+            statusEl.style.color = 'var(--muted)';
+            try {
+                const res = await fetch(`${API_BASE}/assessments/${r.assessment_id}/evidence`, { method: 'POST', body: fd });
+                if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.detail || 'Upload failed.'); }
+                const newItem = await res.json();
+                currentEvidenceItems.push(newItem);
+                renderEvidenceSection(catScores, r);
+                renderMappingSection(catScores, r);
+            } catch (err) {
+                statusEl.textContent = err.message;
+                statusEl.style.color = 'var(--danger)';
+            }
+        });
+    });
+}
+
+function renderMappingSection(catScores, r) {
+    const host = document.getElementById('mappingList');
+    host.innerHTML = catScores.map((c) => {
+        const question = (r.responses || []).find((x) => x.category === c.category);
+        const evStatus = evidenceStatusForCategory(c.category, currentEvidenceItems);
+        const priority = priorityForGap(c.gap);
+        return `
+            <div class="sw-item" data-mapping-category="${escapeHtml(c.category)}">
+                <span>${iconFor(c.category)} ${escapeHtml(c.category)}
+                    <span style="color:var(--muted);font-size:0.82rem;display:block;margin-top:0.2rem;">
+                        ${question ? escapeHtml(question.question_text).slice(0, 90) + (question.question_text.length > 90 ? '…' : '') : 'No linked question'}
+                        &rarr; <span class="evidence-status-pill ${evStatus}" style="margin:0 0.3rem;">${evidenceStatusLabel(evStatus)}</span>
+                        &rarr; ${priority.label} priority
+                    </span>
+                </span>
+                <span class="sw-score">${c.score}/5</span>
+            </div>
+        `;
+    }).join('');
+    host.querySelectorAll('.sw-item').forEach((el) => {
+        el.addEventListener('click', () => {
+            const c = catScores.find((x) => x.category === el.dataset.mappingCategory);
+            openCategoryModal(c, r);
+        });
+    });
+}
+
+async function renderCrosswalkSection(r) {
+    const host = document.getElementById('crosswalkBox');
+    host.innerHTML = '<p class="hint">Loading…</p>';
+    try {
+        const res = await fetch(`${API_BASE}/standards/${r.standard_id || ''}/crosswalk`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        if (!data.available || !data.mappings.length) {
+            host.innerHTML = `<div class="locked-banner"><strong>Cross-framework mapping unavailable</strong><p style="color:var(--muted);margin-top:0.5rem;">We don't yet have verified mapping data connecting ${escapeHtml(data.standard_name || r.standard_name)} to other supported frameworks. This section will populate automatically once that mapping data is added.</p></div>`;
+            return;
+        }
+        host.innerHTML = data.mappings.map((m) => `
+            <div class="crosswalk-row"><span>${escapeHtml(m.mapped_standard_name)}</span><strong>${m.coverage_pct != null ? m.coverage_pct + '%' : 'N/A'}</strong></div>
+        `).join('');
+    } catch {
+        host.innerHTML = `<div class="locked-banner"><strong>Cross-framework mapping unavailable</strong><p style="color:var(--muted);margin-top:0.5rem;">This section will populate automatically once mapping data is available.</p></div>`;
+    }
+}
+
+function wireHistorySection(r) {
+    const btn = document.getElementById('historyLookupBtn');
+    const emailInput = document.getElementById('historyEmailInput');
+    const resultsHost = document.getElementById('historyResults');
+
+    async function lookup() {
+        const email = emailInput.value.trim();
+        if (!email) { resultsHost.innerHTML = '<p class="form-error visible">Enter an email to look up assessment history.</p>'; return; }
+        resultsHost.innerHTML = '<p class="hint">Looking up history…</p>';
+        try {
+            const res = await fetch(`${API_BASE}/assessments?email=${encodeURIComponent(email)}`);
+            const data = await res.json();
+            const items = data.assessments || [];
+            if (!items.length) {
+                resultsHost.innerHTML = '<p class="hint">No completed assessments found for that email.</p>';
+                return;
+            }
+            resultsHost.innerHTML = `
+                <div id="historyItemsList"></div>
+                <div id="historyTrendWrap"></div>
+                <div id="historyCompareWrap"></div>
+            `;
+            document.getElementById('historyItemsList').innerHTML = items.map((a, i) => `
+                <div class="history-item" data-history-idx="${i}">
+                    <div class="hi-main">
+                        <strong>${escapeHtml(a.template_name)}</strong>
+                        <div class="hi-meta">${escapeHtml(a.industry_name)} · ${escapeHtml(a.standard_name)} · ${a.completed_at ? new Date(a.completed_at).toLocaleDateString() : ''} · ${escapeHtml(a.tier)}</div>
+                    </div>
+                    <div class="hi-stats">
+                        <div class="hi-stat"><div class="hs-val">${a.overall_score != null ? a.overall_score : '—'}</div><div class="hs-lbl">Score</div></div>
+                        <div class="hi-stat"><div class="hs-val" style="font-size:0.85rem;">${escapeHtml(a.maturity_level || '—')}</div><div class="hs-lbl">Level</div></div>
+                        <div class="hi-stat"><div class="hs-val">${a.gap_count}</div><div class="hs-lbl">Gaps</div></div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.history-item').forEach((el) => {
+                el.addEventListener('click', async () => {
+                    const item = items[Number(el.dataset.historyIdx)];
+                    const res2 = await fetch(`${API_BASE}/assessments/${item.assessment_id}/result`);
+                    const fullResult = await res2.json();
+                    state.result = fullResult;
+                    state.assessmentId = fullResult.assessment_id;
+                    goTo(4);
+                });
+            });
+
+            // Trend chart only when 2+ assessments exist — never a fabricated single-point trend.
+            if (items.length >= 2) {
+                const chronological = [...items].reverse();
+                document.getElementById('historyTrendWrap').innerHTML = `
+                    <h4 style="color:var(--primary);margin:1.75rem 0 0.75rem;">Score Over Time</h4>
+                    <div class="chart-wrap" style="height:240px;"><canvas id="historyTrendChart"></canvas></div>
+                `;
+                if (window.historyTrendChartInstance) window.historyTrendChartInstance.destroy();
+                window.historyTrendChartInstance = new Chart(document.getElementById('historyTrendChart'), {
+                    type: 'line',
+                    data: {
+                        labels: chronological.map((a) => a.completed_at ? new Date(a.completed_at).toLocaleDateString() : ''),
+                        datasets: [{ label: 'Overall Score', data: chronological.map((a) => a.overall_score), borderColor: '#0f3a7d', backgroundColor: 'rgba(15,58,125,0.1)', tension: 0.3, fill: true }],
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 } }, plugins: { legend: { display: false } } },
+                });
+            }
+
+            // Progress comparison: only when 2+ assessments share the same standard.
+            const byStandard = {};
+            items.forEach((a) => { (byStandard[a.standard_id] = byStandard[a.standard_id] || []).push(a); });
+            const comparable = Object.values(byStandard).find((group) => group.length >= 2);
+            if (comparable) {
+                const [current, previous] = comparable; // newest-first already
+                renderComparisonView(document.getElementById('historyCompareWrap'), previous, current);
+            }
+        } catch {
+            resultsHost.innerHTML = '<p class="form-error visible">Could not load assessment history.</p>';
+        }
+    }
+
+    btn.addEventListener('click', lookup);
+    if (emailInput.value) lookup();
+}
+
+async function renderComparisonView(host, previous, current) {
+    host.innerHTML = '<h4 style="color:var(--primary);margin:1.75rem 0 0.75rem;">Progress Comparison</h4><p class="hint">Loading full category data…</p>';
+    try {
+        const [prevRes, curRes] = await Promise.all([
+            fetch(`${API_BASE}/assessments/${previous.assessment_id}/result`),
+            fetch(`${API_BASE}/assessments/${current.assessment_id}/result`),
+        ]);
+        const prevData = await prevRes.json();
+        const curData = await curRes.json();
+        const deltaEl = (delta) => {
+            const cls = delta > 0 ? 'delta-up' : delta < 0 ? 'delta-down' : 'delta-flat';
+            const sign = delta > 0 ? '+' : '';
+            return `<span class="${cls}">${sign}${delta.toFixed(1)}</span>`;
+        };
+        const scoreDelta = curData.score.overall_score - prevData.score.overall_score;
+
+        const prevByCat = {};
+        prevData.score.category_scores.forEach((c) => { prevByCat[c.category] = c.score; });
+        const catRows = curData.score.category_scores.map((c) => {
+            const prevScore = prevByCat[c.category];
+            if (prevScore === undefined) return '';
+            const delta = c.score - prevScore;
+            return `<div class="compare-cat-row"><span>${escapeHtml(c.category)}</span>${deltaEl(delta)}</div>`;
+        }).join('');
+
+        host.innerHTML = `
+            <h4 style="color:var(--primary);margin:1.75rem 0 0.75rem;">Progress Comparison</h4>
+            <p class="section-note">Comparing your two most recent assessments for this framework.</p>
+            <div class="compare-grid">
+                <div class="compare-col"><div class="cc-lbl">Previous Score</div><div class="cc-val">${prevData.score.overall_score}</div></div>
+                <div class="compare-col"><div class="cc-lbl">Current Score</div><div class="cc-val">${curData.score.overall_score}</div></div>
+                <div class="compare-col"><div class="cc-lbl">Change</div><div class="cc-val">${deltaEl(scoreDelta)}</div></div>
+            </div>
+            <div class="compare-grid" style="margin-top:1rem;">
+                <div class="compare-col"><div class="cc-lbl">Previous Maturity</div><div class="cc-val" style="font-size:1rem;">${escapeHtml(prevData.score.maturity_level)}</div></div>
+                <div class="compare-col"><div class="cc-lbl">Current Maturity</div><div class="cc-val" style="font-size:1rem;">${escapeHtml(curData.score.maturity_level)}</div></div>
+                <div class="compare-col"><div class="cc-lbl">&nbsp;</div><div class="cc-val" style="font-size:1rem;">${prevData.score.maturity_level === curData.score.maturity_level ? 'No change' : 'Changed'}</div></div>
+            </div>
+            ${catRows ? `<div style="margin-top:1.25rem;">${catRows}</div>` : ''}
+        `;
+    } catch {
+        host.innerHTML = '<p class="hint">Could not load comparison data.</p>';
+    }
+}
+
+function renderReportsSection(r) {
+    const host = document.getElementById('reportButtons');
+    const isPremium = r.tier === 'premium' && r.report;
+    const reports = [
+        { type: 'executive', title: 'Executive Report', desc: 'Summary, score, strengths, priorities.', premiumOnly: true },
+        { type: 'compliance', title: 'Compliance Report', desc: 'Requirements, responses, evidence, gaps.' },
+        { type: 'technical', title: 'Technical Report', desc: 'Technical findings, controls, evidence.' },
+        { type: 'remediation', title: 'Remediation Report', desc: 'Gaps, priority, recommended actions.' },
+        { type: 'evidence', title: 'Evidence Report', desc: 'Evidence status and files by category.' },
+    ];
+    host.innerHTML = reports.map((rep) => {
+        const disabled = rep.premiumOnly && !isPremium;
+        return `
+            <a class="report-btn ${disabled ? 'disabled' : ''}" ${disabled ? '' : `href="${API_BASE}/assessments/${r.assessment_id}/report/${rep.type}.docx"`}>
+                <div class="rb-title">${rep.title}</div>
+                <div class="rb-desc">${disabled ? 'Available with a full personalized report.' : rep.desc}</div>
+            </a>
+        `;
+    }).join('');
 }
 
 render();

@@ -162,6 +162,7 @@ class AssessmentResultOut(BaseModel):
     template_name: str
     industry_name: str
     standard_name: str
+    standard_id: str
     tier: str
     completed_at: datetime | None = None
     score: ScoreOut | None
@@ -175,6 +176,52 @@ class ExplainScoreRequest(BaseModel):
 
 class ExplainScoreResponse(BaseModel):
     explanation: str
+
+
+# ---------- Evidence ----------
+
+class EvidenceOut(BaseModel):
+    id: str
+    assessment_id: str
+    category: str
+    file_name: str
+    content_type: str
+    status: str
+    description: str
+    uploaded_at: datetime
+
+
+# ---------- Assessment history ----------
+
+class AssessmentSummaryOut(BaseModel):
+    assessment_id: str
+    template_name: str
+    industry_name: str
+    standard_name: str
+    standard_id: str
+    tier: str
+    completed_at: datetime | None
+    overall_score: float | None
+    maturity_level: str | None
+    gap_count: int
+
+
+class AssessmentHistoryOut(BaseModel):
+    ok: bool = True
+    assessments: list[AssessmentSummaryOut]
+
+
+# ---------- Framework crosswalk ----------
+
+class CrosswalkEntry(BaseModel):
+    mapped_standard_name: str
+    coverage_pct: float | None
+
+
+class CrosswalkOut(BaseModel):
+    available: bool
+    standard_name: str
+    mappings: list[CrosswalkEntry] = Field(default_factory=list)
 
 
 # ---------- Leads ----------

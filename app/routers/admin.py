@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.db.models import Industry, Standard, AssessmentTemplate, Question
+from app.db.models import Industry, Standard, AssessmentTemplate, Question, Evidence
 from app.schemas import AdminLoginRequest, IndustryIn, StandardIn, TemplateIn, QuestionIn
 from app.middleware.admin_auth import require_admin
 from app.config import ADMIN_USERNAME, ADMIN_PASSWORD_HASH
@@ -195,3 +195,17 @@ async def admin_delete_question(question_id: str, db: AsyncSession = Depends(get
     await db.delete(question)
     await db.commit()
     return {"ok": True}
+
+
+# ---------- Evidence verification ----------
+# The only real "verified" state transition in the system — deliberately manual,
+# never automatic, per the evidence spec ("uploading means provided, not verified").
+
+@router.post("/evidence/{evidence_id}/verify", dependencies=[Depends(require_admin)])
+async def admin_verify_evidence(evidence_id: str, db: AsyncSession = Depends(get_db)):
+    evidence = await db.get(Evidence, evidence_id)
+    if not evidence:
+        raise HTTPException(404, "Evidence not found.")
+    evidence.status = "verified"
+    await db.commit()
+    return {"ok": True, "status": evidence.status}
