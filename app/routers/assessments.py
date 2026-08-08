@@ -15,7 +15,7 @@ from app.db.models import Assessment, AssessmentTemplate, Standard, Industry, Re
 from app.schemas import (
     StartAssessmentRequest, StartAssessmentResponse, QuestionOut, QuestionOption,
     SubmitAssessmentRequest, AssessmentResultOut, ScoreOut, ReportOut, Roadmap,
-    ExplainScoreRequest, ExplainScoreResponse,
+    ExplainScoreRequest, ExplainScoreResponse, ResponseDetail,
 )
 from app.ai.question_generator import generate_questions
 from app.ai.scoring_engine import generate_scorecard
@@ -225,14 +225,30 @@ async def _build_result(db: AsyncSession, assessment_id: str) -> AssessmentResul
             conclusion=da.get("conclusion", ""),
         )
 
+    questions_by_id = {q["id"]: q for q in (assessment.questions_snapshot or [])}
+    response_rows = (
+        await db.execute(select(ResponseModel).where(ResponseModel.assessment_id == assessment_id))
+    ).scalars().all()
+    responses_out = []
+    for r in response_rows:
+        q = questions_by_id.get(r.question_id)
+        if not q:
+            continue
+        responses_out.append(ResponseDetail(
+            category=q["category"], question_text=q["question_text"], question_type=q["question_type"],
+            answer=r.answer, evidence_note=r.evidence_note,
+        ))
+
     return AssessmentResultOut(
         assessment_id=assessment.id,
         template_name=template.name,
         industry_name=industry.name,
         standard_name=standard.name,
         tier=assessment.tier,
+        completed_at=assessment.completed_at,
         score=score_out,
         report=report_out,
+        responses=responses_out,
     )
 
 

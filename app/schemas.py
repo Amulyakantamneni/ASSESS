@@ -2,6 +2,7 @@
 # Pydantic request/response models. The Question/Score/Report shapes here are
 # also used as the Claude structured-output schema (output_config.format).
 
+from datetime import datetime
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, EmailStr
 
@@ -148,14 +149,24 @@ class ReportOut(BaseModel):
     conclusion: str
 
 
+class ResponseDetail(BaseModel):
+    category: str
+    question_text: str
+    question_type: str
+    answer: dict
+    evidence_note: str = ""
+
+
 class AssessmentResultOut(BaseModel):
     assessment_id: str
     template_name: str
     industry_name: str
     standard_name: str
     tier: str
+    completed_at: datetime | None = None
     score: ScoreOut | None
     report: ReportOut | None
+    responses: list[ResponseDetail] = Field(default_factory=list)
 
 
 class ExplainScoreRequest(BaseModel):
