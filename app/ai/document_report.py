@@ -1,22 +1,23 @@
 # app/ai/document_report.py
 # Renders a Controlled Document Maturity Assessment result into an audit-grade
 # .docx: real Word-native multilevel heading numbering (not manually-typed),
-# a real TOC field, header/footer with real page-number fields, Aptos font,
-# autofit-to-window tables with repeating header rows, landscape sections for
-# the wide tables, and heat-map colored scores. Sibling to report_generator.py,
+# a real (always-populated) static table of contents, header/footer with real
+# page-number fields, Aptos font, fixed-but-proportional-width tables that
+# span the full page width, landscape sections for the wide tables, heat-map
+# colored scores, and a category score chart. Sibling to report_generator.py,
 # which handles the unrelated Industry/Standard/Template questionnaire reports.
 
 import re
 from datetime import datetime, timezone
 
 from docx import Document
-from docx.shared import Pt, RGBColor
+from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.section import WD_ORIENT, WD_SECTION
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
-from app.ai.report_generator import REPORTS_DIR
+from app.ai.report_generator import REPORTS_DIR, _category_chart_image
 
 NAVY = RGBColor(0x0F, 0x3A, 0x7D)
 GREY = RGBColor(0x6B, 0x72, 0x80)
@@ -33,6 +34,10 @@ HEAT_MAP = {
 }
 
 PRIORITY_ORDER = ["Critical", "High", "Medium", "Low"]
+
+# Usable content width (Letter, 1" margins each side), portrait and landscape.
+PORTRAIT_WIDTH = Inches(6.5)
+LANDSCAPE_WIDTH = Inches(9.0)
 
 
 # ---------------------------------------------------------------------------
@@ -147,33 +152,46 @@ def _configure_document_styles(doc: Document):
         style.paragraph_format.keep_with_next = True  # prevents orphaned headings at page bottom
 
 
+class _HeadingNumberer:
+    """Computes 1 / 1.1 / 1.1.1-style numbers in parallel with Word's own
+    native list numbering on the heading paragraphs (which is what actually
+    displays in Word) — used only to build the static table of contents text,
+    since a dynamic TOC field shows a blank placeholder until a human opens
+    the file in Word and updates it, which read as broken/incomplete."""
+
+    def __init__(self):
+        self._counters = [0, 0, 0]
+
+    def next(self, level: int) -> str:
+        idx = level - 1
+        self._counters[idx] += 1
+        for i in range(idx + 1, 3):
+            self._counters[i] = 0
+        return ".".join(str(c) for c in self._counters[:level])
+
+
 def _heading(doc: Document, level: int, text: str):
+    number = doc._toc_numberer.next(level)
     style = f"Heading {level}"
-    return doc.add_paragraph(text, style=style)
+    p = doc.add_paragraph(text, style=style)
+    doc._toc_entries.append((level, number, text))
+    return p
 
 
-def _insert_toc_field(doc: Document):
-    p = doc.add_paragraph()
-    run = p.add_run()
-    r = run._r
-
-    fld_begin = OxmlElement("w:fldChar")
-    fld_begin.set(qn("w:fldCharType"), "begin")
-    instr = OxmlElement("w:instrText")
-    instr.set(qn("xml:space"), "preserve")
-    instr.text = 'TOC \\o "1-3" \\h \\z \\u'
-    fld_separate = OxmlElement("w:fldChar")
-    fld_separate.set(qn("w:fldCharType"), "separate")
-    placeholder = OxmlElement("w:t")
-    placeholder.text = "Right-click here and choose Update Field to generate the table of contents."
-    fld_end = OxmlElement("w:fldChar")
-    fld_end.set(qn("w:fldCharType"), "end")
-
-    r.append(fld_begin)
-    r.append(instr)
-    r.append(fld_separate)
-    r.append(placeholder)
-    r.append(fld_end)
+def _render_static_toc(doc: Document, entries: list[tuple[int, str, str]]):
+    """A real, always-populated table of contents built from the actual
+    heading outline — not a Word TOC field, which only renders after a human
+    opens the file and manually updates it."""
+    heading_p = doc.add_paragraph("Table of Contents", style="Heading 1")
+    _suppress_numbering(heading_p)
+    for level, number, text in entries:
+        p = doc.add_paragraph()
+        p.paragraph_format.left_indent = Inches(0.28 * (level - 1))
+        p.paragraph_format.space_after = Pt(3)
+        run = p.add_run(f"{number}   {text}")
+        run.font.bold = level == 1
+        run.font.size = Pt(11 if level == 1 else 10)
+        run.font.color.rgb = NAVY if level == 1 else DARK
 
 
 def _add_field_run(paragraph, instr_text: str):
@@ -217,20 +235,39 @@ def _add_header_footer(doc: Document, document_title: str):
     total_run.font.color.rgb = GREY
 
 
-def _set_table_autofit_window(table):
-    table.autofit = True
-    tbl_pr = table._tbl.tblPr
+def _set_table_widths(table, ratios: list[float], total_width):
+    """Fixed layout with explicit per-column widths proportional to `ratios`,
+    summing to `total_width` (spans the full page width). Plain
+    tblLayout="autofit" (content-driven auto-fit) was what produced the
+    narrow, near-equal columns that forced prose into tall, mostly-empty
+    rows — explicit fixed widths render reliably instead."""
+    table.autofit = False
+    tbl = table._tbl
+    tbl_pr = tbl.tblPr
     for tag in ("w:tblW", "w:tblLayout"):
         existing = tbl_pr.find(qn(tag))
         if existing is not None:
             tbl_pr.remove(existing)
     tbl_w = OxmlElement("w:tblW")
-    tbl_w.set(qn("w:type"), "pct")
-    tbl_w.set(qn("w:w"), "5000")
+    tbl_w.set(qn("w:type"), "dxa")
+    tbl_w.set(qn("w:w"), str(int(total_width.twips)))
     tbl_pr.append(tbl_w)
     tbl_layout = OxmlElement("w:tblLayout")
-    tbl_layout.set(qn("w:type"), "autofit")
+    tbl_layout.set(qn("w:type"), "fixed")
     tbl_pr.append(tbl_layout)
+
+    widths = [int(total_width.twips * r) for r in ratios]
+    grid = tbl.find(qn("w:tblGrid"))
+    if grid is None:
+        grid = OxmlElement("w:tblGrid")
+        tbl.insert(list(tbl).index(tbl_pr) + 1, grid)
+    else:
+        for child in list(grid):
+            grid.remove(child)
+    for w in widths:
+        grid_col = OxmlElement("w:gridCol")
+        grid_col.set(qn("w:w"), str(w))
+        grid.append(grid_col)
 
 
 def _repeat_header_row(table):
@@ -260,10 +297,11 @@ def _set_cell_text(cell, text, color: RGBColor | None = None, bold: bool = False
     run.font.bold = bold
 
 
-def _make_table(doc: Document, headers: list[str], style: str = "Light Grid Accent 1"):
+def _make_table(doc: Document, headers: list[str], widths: list[float], landscape: bool = False, style: str = "Light Grid Accent 1"):
     table = doc.add_table(rows=1, cols=len(headers))
     table.style = style
-    _set_table_autofit_window(table)
+    total = LANDSCAPE_WIDTH if landscape else PORTRAIT_WIDTH
+    _set_table_widths(table, widths, total)
     _repeat_header_row(table)
     for i, label in enumerate(headers):
         _set_cell_text(table.rows[0].cells[i], label, bold=True)
@@ -293,7 +331,7 @@ def _bullets(doc: Document, items: list[str]):
 def _kv_table(doc: Document, rows: list[tuple[str, str]]):
     table = doc.add_table(rows=0, cols=2)
     table.style = "Table Grid"
-    _set_table_autofit_window(table)
+    _set_table_widths(table, [0.3, 0.7], PORTRAIT_WIDTH)
     for label, value in rows:
         row = table.add_row().cells
         _set_cell_text(row[0], label, bold=True)
@@ -314,7 +352,7 @@ def _score_line(doc: Document, score: int, prefix: str = "Score"):
 # Section builders
 # ---------------------------------------------------------------------------
 
-def _cover_and_toc(doc: Document, document_title: str, context: dict, original_filename: str):
+def _cover_page(doc: Document, document_title: str, context: dict, original_filename: str):
     title = doc.add_paragraph()
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = title.add_run(document_title)
@@ -342,11 +380,6 @@ def _cover_and_toc(doc: Document, document_title: str, context: dict, original_f
         r = meta_p.add_run(line + "\n")
         r.font.color.rgb = GREY
 
-    doc.add_page_break()
-
-    toc_heading = doc.add_paragraph("Table of Contents", style="Heading 1")
-    _suppress_numbering(toc_heading)
-    _insert_toc_field(doc)
     doc.add_page_break()
 
 
@@ -395,19 +428,13 @@ def _section_executive_summary(doc: Document, result: dict):
 def _section_scope_methodology(doc: Document, document_title: str, original_filename: str):
     _heading(doc, 1, "Assessment Scope and Methodology")
 
-    _heading(doc, 2, "Objective")
+    _heading(doc, 2, "Objective, Source, and Scope")
     doc.add_paragraph(
         "Evaluate the maturity and effectiveness of the submitted document as both a "
-        "controlled management-system document and an operational business tool."
-    )
-
-    _heading(doc, 2, "Source Document")
-    doc.add_paragraph(f"{document_title} ({original_filename}).")
-
-    _heading(doc, 2, "Scope")
-    doc.add_paragraph(
-        "The assessment covers the content of the submitted document only, evaluated "
-        "against the 15 fixed categories in Section 6."
+        "controlled management-system document and an operational business tool. "
+        f"Source document: {document_title} ({original_filename}). The assessment covers "
+        "the content of the submitted document only, evaluated against the 15 fixed "
+        "categories in Section 6."
     )
 
     _heading(doc, 2, "Method")
@@ -415,12 +442,14 @@ def _section_scope_methodology(doc: Document, document_title: str, original_file
         "Context (organization, industry, process, governance, and compliance profile) "
         "was extracted from the document and reviewed/corrected by the user before "
         "scoring. Scoring was then performed against that reviewed context and the "
-        "document's actual text."
+        "document's actual text, with every category scored 1-5 against the maturity "
+        "model below and a stated confidence level (High/Medium/Low) reflecting the "
+        "quantity and quality of evidence available, not just whether a topic was "
+        "mentioned."
     )
 
     _heading(doc, 2, "Maturity Model")
-    _make_table(doc, ["Level", "Description"])
-    table = doc.tables[-1]
+    table = _make_table(doc, ["Level", "Description"], [0.15, 0.85])
     for level, desc in (
         (1, "Initial / Ad Hoc"), (2, "Repeatable"), (3, "Defined"),
         (4, "Managed"), (5, "Optimized / Best Practice"),
@@ -429,7 +458,7 @@ def _section_scope_methodology(doc: Document, document_title: str, original_file
         _set_cell_text(row[0], str(level))
         _set_cell_text(row[1], desc)
 
-    _heading(doc, 2, "Evidence Methodology")
+    _heading(doc, 2, "Evidence Methodology and Limitations")
     doc.add_paragraph(
         "Every finding is classified as Explicit Evidence (directly stated), Strong "
         "Indication (reasonably supported but not explicit), Not Evidenced "
@@ -437,15 +466,6 @@ def _section_scope_methodology(doc: Document, document_title: str, original_file
         "applicable external standard, not from the document itself). Mentioning a "
         "regulation or standard is never treated as proof of compliance with it."
     )
-
-    _heading(doc, 2, "Scoring Method")
-    doc.add_paragraph(
-        "Each category is scored 1-5 against the maturity model above, with a stated "
-        "confidence level (High/Medium/Low) reflecting the quantity and quality of "
-        "evidence available, not just whether the topic was mentioned."
-    )
-
-    _heading(doc, 2, "Limitations")
     doc.add_paragraph(
         "This assessment is based solely on the content of the submitted document. "
         "Source citations for PDF pages are page-based; DOCX citations are "
@@ -460,22 +480,15 @@ def _section_scope_methodology(doc: Document, document_title: str, original_file
 def _section_organization_profile(doc: Document, context: dict):
     _heading(doc, 1, "Organization and Process Profile")
 
-    _heading(doc, 2, "Organization")
+    _heading(doc, 2, "Organization and Industry")
     _kv_table(doc, [
         ("Organization", context.get("organization_name", "")), ("Business Unit", context.get("business_unit", "")),
         ("Department", context.get("department", "")), ("Function", context.get("function", "")),
         ("Location", context.get("location", "")),
-    ])
-
-    _heading(doc, 2, "Industry")
-    _kv_table(doc, [
         ("Industry", context.get("industry", "")), ("Sub-Industry", context.get("sub_industry", "")),
         ("Business Model", context.get("business_model", "")),
         ("Operating Environment", context.get("operating_environment", "")),
     ])
-
-    _heading(doc, 2, "Business Function")
-    doc.add_paragraph(context.get("function") or "Not evidenced in the source document.")
 
     _heading(doc, 2, "Process")
     _kv_table(doc, [
@@ -485,19 +498,12 @@ def _section_organization_profile(doc: Document, context: dict):
         ("Activities", context.get("process_activities", "")), ("Process Owner", context.get("process_owner", "")),
     ])
 
-    _heading(doc, 2, "Geographic Scope")
-    doc.add_paragraph(context.get("location") or "Not evidenced in the source document.")
-
-    _heading(doc, 2, "Stakeholders")
-    doc.add_paragraph(context.get("governance_roles") or "Not evidenced in the source document.")
-
-    _heading(doc, 2, "Systems and Technology")
+    _heading(doc, 2, "Stakeholders, Systems, and Integration")
+    doc.add_paragraph("Stakeholders: " + (context.get("governance_roles") or "Not evidenced in the source document."))
     systems = context.get("systems", []) or []
-    _bullets(doc, systems or ["Not evidenced in the source document."])
+    doc.add_paragraph("Systems and Technology: " + (", ".join(systems) or "Not evidenced in the source document."))
     if context.get("automation_notes"):
         doc.add_paragraph(context["automation_notes"])
-
-    _heading(doc, 2, "Process Interfaces")
     doc.add_paragraph(
         "See Section 6.12 (Process Integration) for how this process integrates with "
         "related procedures, systems, and enterprise processes."
@@ -508,9 +514,7 @@ def _section_compliance_profile(doc: Document, context: dict):
     _heading(doc, 1, "Regulatory, Compliance and Standards Profile")
     items = context.get("compliance_profile", []) or []
 
-    for n, label, keyword in (
-        (1, "Regulations", "regulat"), (2, "Standards", "standard"), (3, "Certifications", "certif"),
-    ):
+    for label, keyword in (("Regulations", "regulat"), ("Standards", "standard"), ("Certifications", "certif")):
         _heading(doc, 2, label)
         matches = [i for i in items if keyword in (i.get("req_type", "") or "").lower()]
         if matches:
@@ -522,23 +526,20 @@ def _section_compliance_profile(doc: Document, context: dict):
     internal = [i for i in items if "internal" in (i.get("req_type", "") or "").lower() or "polic" in (i.get("req_type", "") or "").lower()]
     _bullets(doc, [f"{i.get('requirement', '')} — {i.get('status', '')}" for i in internal] or ["Not evidenced in the source document."])
 
-    _heading(doc, 2, "Applicability")
+    _heading(doc, 2, "Applicability and Evidence")
     doc.add_paragraph("Full requirement-by-requirement applicability, evidence, and status:")
     if items:
-        table = _make_table(doc, ["Requirement", "Type", "Applicability", "Evidence", "Status", "Source"])
+        table = _make_table(doc, ["Requirement", "Type", "Applicability / Evidence", "Status", "Source"],
+                             [0.24, 0.10, 0.36, 0.12, 0.18], landscape=True)
         for i in items:
             row = table.add_row().cells
             _set_cell_text(row[0], i.get("requirement", ""))
             _set_cell_text(row[1], i.get("req_type", ""))
-            _set_cell_text(row[2], i.get("applicability", ""))
-            _set_cell_text(row[3], i.get("evidence", ""))
-            _set_cell_text(row[4], i.get("status", ""))
-            _set_cell_text(row[5], i.get("source", ""))
+            _set_cell_text(row[2], f"{i.get('applicability', '')} {i.get('evidence', '')}")
+            _set_cell_text(row[3], i.get("status", ""))
+            _set_cell_text(row[4], i.get("source", ""))
     else:
         doc.add_paragraph("No regulatory, standard, or compliance references were found in the source document.")
-
-    _heading(doc, 2, "Evidence")
-    doc.add_paragraph("Evidence for each requirement is captured in the table above, cited to its source where identifiable.")
 
     _heading(doc, 2, "Compliance Gaps")
     gaps = [i for i in items if i.get("status") in ("Not Evidenced", "Gap Identified", "Partially Addressed")]
@@ -548,30 +549,34 @@ def _section_compliance_profile(doc: Document, context: dict):
 def _section_maturity_results(doc: Document, result: dict):
     _heading(doc, 1, "Maturity Assessment Results")
 
-    _heading(doc, 2, "Overall Score")
-    doc.add_paragraph(f"{result.get('overall_maturity_score', 0)}/5")
+    _heading(doc, 2, "Overall Score and Level")
+    _kv_table(doc, [
+        ("Overall Score", f"{result.get('overall_maturity_score', 0)}/5"),
+        ("Overall Level", result.get("overall_maturity_level", "")),
+        ("Evidence Coverage", f"{result.get('evidence_coverage_pct', 0)}%"),
+        ("Confidence", result.get("assessment_confidence", "")),
+    ])
 
-    _heading(doc, 2, "Overall Level")
-    doc.add_paragraph(result.get("overall_maturity_level", ""))
-
-    _heading(doc, 2, "Category Summary")
-    table = _make_table(doc, ["Category", "Score", "Confidence"])
-    for c in result.get("category_scores", []):
-        row = table.add_row().cells
-        _set_cell_text(row[0], c.get("category", ""))
-        _set_cell_text(row[1], str(c.get("score", "")))
-        _set_cell_text(row[2], c.get("confidence", ""))
+    category_scores = result.get("category_scores", [])
+    if category_scores:
+        chart_img = _category_chart_image(category_scores)
+        chart_p = doc.add_paragraph()
+        chart_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        chart_p.add_run().add_picture(chart_img, width=Inches(6.2))
 
     _heading(doc, 2, "Heat Map")
-    legend = _make_table(doc, [f"{s} — {HEAT_MAP[s][1]}" for s in (5, 4, 3, 2, 1)], style="Table Grid")
+    legend = _make_table(doc, [f"{s} — {HEAT_MAP[s][1]}" for s in (5, 4, 3, 2, 1)], [0.2] * 5, style="Table Grid")
     for i, score in enumerate((5, 4, 3, 2, 1)):
         fill, _, color = HEAT_MAP[score]
         cell = legend.rows[0].cells[i]
         _shade_cell(cell, fill)
         cell.paragraphs[0].runs[0].font.color.rgb = color
 
-    heat_table = _make_table(doc, ["Category", "Score", "Evidence Found", "Gaps Identified", "Recommendations", "Heat Map"])
-    for c in result.get("category_scores", []):
+    heat_table = _make_table(
+        doc, ["Category", "Score", "Evidence Found", "Gaps Identified", "Recommendations", "Heat Map"],
+        [0.13, 0.05, 0.26, 0.26, 0.24, 0.06], landscape=True,
+    )
+    for c in category_scores:
         row = heat_table.add_row().cells
         score = int(c.get("score", 0) or 0)
         fill, meaning, color = HEAT_MAP.get(score, ("FFFFFF", "Unscored", DARK))
@@ -584,25 +589,21 @@ def _section_maturity_results(doc: Document, result: dict):
         _set_cell_text(row[5], meaning, color=color, bold=True)
         _shade_cell(row[5], fill)
 
-    _heading(doc, 2, "Evidence Coverage")
-    doc.add_paragraph(f"{result.get('evidence_coverage_pct', 0)}%")
-
-    _heading(doc, 2, "Confidence")
-    doc.add_paragraph(result.get("assessment_confidence", ""))
-
 
 def _section_detailed_assessment(doc: Document, result: dict, categories: list[dict]):
     _heading(doc, 1, "Detailed Maturity Assessment")
     assess_by_name = {c["name"]: c["assess"] for c in categories}
     for c in result.get("category_scores", []):
         _heading(doc, 2, c.get("category", ""))
-        doc.add_paragraph(assess_by_name.get(c.get("category", ""), "")).runs[0].italic = True
+        italic_p = doc.add_paragraph(assess_by_name.get(c.get("category", ""), ""))
+        if italic_p.runs:
+            italic_p.runs[0].italic = True
         score = int(c.get("score", 0) or 0)
         _score_line(doc, score)
         doc.add_paragraph(f"Confidence: {c.get('confidence', '')}    Source: {c.get('source', '')}")
-        _labeled = doc.add_paragraph()
-        _labeled.add_run("Evidence: ").bold = True
-        _labeled.add_run(c.get("evidence_found", ""))
+        evidence_p = doc.add_paragraph()
+        evidence_p.add_run("Evidence: ").bold = True
+        evidence_p.add_run(c.get("evidence_found", ""))
         gaps_p = doc.add_paragraph()
         gaps_p.add_run("Gaps: ").bold = True
         gaps_p.add_run(c.get("gaps_identified", ""))
@@ -624,7 +625,8 @@ def _section_gap_analysis(doc: Document, result: dict):
         if not matches:
             doc.add_paragraph("None identified.")
             continue
-        table = _make_table(doc, ["Gap ID", "Category", "Requirement", "Gap Detail", "Impact"])
+        table = _make_table(doc, ["Gap ID", "Category", "Requirement", "Gap Detail", "Impact"],
+                             [0.06, 0.14, 0.18, 0.36, 0.26], landscape=True)
         for g in matches:
             row = table.add_row().cells
             _set_cell_text(row[0], g.get("gap_id", ""))
@@ -636,15 +638,20 @@ def _section_gap_analysis(doc: Document, result: dict):
 
 def _section_recommendations(doc: Document, result: dict):
     _heading(doc, 1, "Top Improvement Recommendations")
+    doc.add_paragraph("Ranked by priority. Items marked Yes under Quick Win take under a month and minimal effort.")
+    table = _make_table(
+        doc, ["#", "Recommendation", "Business Benefit", "Risk if Not Addressed", "Priority", "Gain", "Quick Win"],
+        [0.03, 0.24, 0.20, 0.20, 0.08, 0.13, 0.12], landscape=True,
+    )
     for i, r in enumerate(result.get("top_recommendations", []), start=1):
-        _heading(doc, 2, f"Recommendation {i}" + ("  [QUICK WIN]" if r.get("quick_win") else ""))
-        doc.add_paragraph(r.get("recommendation", ""))
-        _kv_table(doc, [
-            ("Business Benefit", r.get("business_benefit", "")),
-            ("Risk if Not Addressed", r.get("risk_if_not_addressed", "")),
-            ("Priority", r.get("priority", "")), ("Estimated Maturity Gain", r.get("estimated_maturity_gain", "")),
-            ("Evidence Basis", r.get("evidence_basis", "")),
-        ])
+        row = table.add_row().cells
+        _set_cell_text(row[0], str(i))
+        _set_cell_text(row[1], r.get("recommendation", ""))
+        _set_cell_text(row[2], r.get("business_benefit", ""))
+        _set_cell_text(row[3], r.get("risk_if_not_addressed", ""))
+        _set_cell_text(row[4], r.get("priority", ""))
+        _set_cell_text(row[5], r.get("estimated_maturity_gain", ""))
+        _set_cell_text(row[6], "Yes" if r.get("quick_win") else "No")
 
 
 def _section_quick_wins(doc: Document, result: dict):
@@ -683,15 +690,11 @@ def _section_target_state(doc: Document, result: dict):
 def _section_management_conclusion(doc: Document, result: dict):
     _heading(doc, 1, "Management Conclusion")
 
-    _heading(doc, 2, "Maturity Summary")
+    _heading(doc, 2, "Maturity and Readiness Summary")
     _kv_table(doc, [
         ("Current Maturity Level", result.get("current_maturity_level", "")),
         ("Target Maturity Level", "Level 5 — Optimized / Best Practice"),
         ("Overall Maturity Score", f"{result.get('overall_maturity_score', 0)}/5"),
-    ])
-
-    _heading(doc, 2, "Readiness Summary")
-    _kv_table(doc, [
         ("Compliance Readiness", f"{result.get('compliance_readiness_pct', 0)}%"),
         ("Evidence Coverage", f"{result.get('evidence_coverage_pct', 0)}%"),
         ("Assessment Confidence", result.get("assessment_confidence", "")),
@@ -700,55 +703,29 @@ def _section_management_conclusion(doc: Document, result: dict):
 
     _heading(doc, 2, "Critical Risks")
     critical = [g for g in result.get("gap_analysis", []) if g.get("priority") == "Critical"]
-    _bullets(doc, [g.get("risk", "") for g in critical] or ["None identified."])
+    _bullets(doc, [g.get("risk", g.get("impact", "")) for g in critical] or ["None identified."])
 
-    _heading(doc, 2, "Priority Actions")
+    _heading(doc, 2, "Priority Actions and Roadmap")
     _bullets(doc, [r.get("recommendation", "") for r in result.get("top_recommendations", [])[:5]])
-
-    _heading(doc, 2, "Roadmap to Level 5")
     doc.add_paragraph("See Section 10 for the full 30/60/90/Beyond-90 roadmap, and Section 11 for the target state.")
 
 
 def _section_appendices(doc: Document, result: dict, context: dict):
     _heading(doc, 1, "Appendices")
 
-    _heading(doc, 2, "Evidence Register")
-    table = _make_table(doc, ["Category", "Score", "Confidence", "Source", "Evidence Found"])
-    for c in result.get("category_scores", []):
-        row = table.add_row().cells
-        _set_cell_text(row[0], c.get("category", ""))
-        _set_cell_text(row[1], str(c.get("score", "")))
-        _set_cell_text(row[2], c.get("confidence", ""))
-        _set_cell_text(row[3], c.get("source", ""))
-        _set_cell_text(row[4], c.get("evidence_found", ""))
-
-    _heading(doc, 2, "Compliance Register")
-    items = context.get("compliance_profile", []) or []
-    if items:
-        table = _make_table(doc, ["Requirement", "Status", "Source"])
-        for i in items:
-            row = table.add_row().cells
-            _set_cell_text(row[0], i.get("requirement", ""))
-            _set_cell_text(row[1], i.get("status", ""))
-            _set_cell_text(row[2], i.get("source", ""))
-    else:
-        doc.add_paragraph("No compliance items were identified in the source document.")
+    _heading(doc, 2, "Evidence and Compliance Registers")
+    doc.add_paragraph(
+        "Full per-category evidence (with source citations and confidence) is in "
+        "Section 6. The full compliance requirement register (with source citations) "
+        "is in Section 4.5."
+    )
 
     _heading(doc, 2, "Assessment Scorecard")
-    table = _make_table(doc, ["Category", "Score"])
+    table = _make_table(doc, ["Category", "Score"], [0.75, 0.25])
     for c in result.get("category_scores", []):
         row = table.add_row().cells
         _set_cell_text(row[0], c.get("category", ""))
         _set_cell_text(row[1], str(c.get("score", "")))
-
-    _heading(doc, 2, "Recommendation Register")
-    table = _make_table(doc, ["#", "Recommendation", "Priority", "Quick Win"])
-    for i, r in enumerate(result.get("top_recommendations", []), start=1):
-        row = table.add_row().cells
-        _set_cell_text(row[0], str(i))
-        _set_cell_text(row[1], r.get("recommendation", ""))
-        _set_cell_text(row[2], r.get("priority", ""))
-        _set_cell_text(row[3], "Yes" if r.get("quick_win") else "No")
 
     _heading(doc, 2, "Assumptions and Limitations")
     doc.add_paragraph(
@@ -768,7 +745,7 @@ def _section_appendices(doc: Document, result: dict, context: dict):
     for g in result.get("gap_analysis", []):
         if g.get("source"):
             sources.add(g["source"])
-    for i in items:
+    for i in context.get("compliance_profile", []) or []:
         if i.get("source"):
             sources.add(i["source"])
     _bullets(doc, sorted(sources) or ["No source citations were captured for this assessment."])
@@ -778,21 +755,9 @@ def _section_appendices(doc: Document, result: dict, context: dict):
 # Top-level render
 # ---------------------------------------------------------------------------
 
-def render_document_assessment_docx(
-    *, assessment_id: str, document_title: str, original_filename: str, result: dict, context: dict,
-) -> str:
-    from app.ai.document_maturity import DOCUMENT_MATURITY_CATEGORIES
-
-    doc = Document()
-    _configure_document_styles(doc)
-    num_id = _add_multilevel_numbering(doc)
-    _link_heading_numbering(doc, num_id)
-    _add_header_footer(doc, document_title)
-
-    _cover_and_toc(doc, document_title, context, original_filename)
-
+def _build_body(doc: Document, result: dict, context: dict, categories: list[dict]):
     _section_executive_summary(doc, result)
-    _section_scope_methodology(doc, document_title, original_filename)
+    _section_scope_methodology(doc, doc._document_title, doc._original_filename)
     _section_organization_profile(doc, context)
 
     _start_landscape_section(doc)
@@ -800,18 +765,50 @@ def render_document_assessment_docx(
     _section_maturity_results(doc, result)
 
     _start_portrait_section(doc)
-    _section_detailed_assessment(doc, result, DOCUMENT_MATURITY_CATEGORIES)
+    _section_detailed_assessment(doc, result, categories)
 
     _start_landscape_section(doc)
     _section_gap_analysis(doc, result)
+    _section_recommendations(doc, result)
 
     _start_portrait_section(doc)
-    _section_recommendations(doc, result)
     _section_quick_wins(doc, result)
     _section_roadmap(doc, result)
     _section_target_state(doc, result)
     _section_management_conclusion(doc, result)
     _section_appendices(doc, result, context)
+
+
+def render_document_assessment_docx(
+    *, assessment_id: str, document_title: str, original_filename: str, result: dict, context: dict,
+) -> str:
+    from app.ai.document_maturity import DOCUMENT_MATURITY_CATEGORIES
+
+    # Pass 1: throwaway build, purely to compute the real heading/TOC outline
+    # (cheap — no AI calls here, just local formatting logic run twice).
+    dry_doc = Document()
+    dry_doc._toc_numberer = _HeadingNumberer()
+    dry_doc._toc_entries = []
+    dry_doc._document_title = document_title
+    dry_doc._original_filename = original_filename
+    _build_body(dry_doc, result, context, DOCUMENT_MATURITY_CATEGORIES)
+    toc_entries = dry_doc._toc_entries
+
+    # Pass 2: the real document, now able to render an always-populated TOC.
+    doc = Document()
+    _configure_document_styles(doc)
+    num_id = _add_multilevel_numbering(doc)
+    _link_heading_numbering(doc, num_id)
+    _add_header_footer(doc, document_title)
+    doc._toc_numberer = _HeadingNumberer()
+    doc._toc_entries = []
+    doc._document_title = document_title
+    doc._original_filename = original_filename
+
+    _cover_page(doc, document_title, context, original_filename)
+    _render_static_toc(doc, toc_entries)
+    doc.add_page_break()
+    _build_body(doc, result, context, DOCUMENT_MATURITY_CATEGORIES)
 
     file_path = REPORTS_DIR / f"{assessment_id}_document_assessment.docx"
     doc.save(str(file_path))
