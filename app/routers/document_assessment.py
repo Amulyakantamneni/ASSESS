@@ -12,9 +12,11 @@
 #   POST /{id}/assess     -> scores against the (possibly user-corrected) context,
 #                            renders the docx, status=assessed
 
+import logging
 import uuid
 from pathlib import Path
 
+import anthropic
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,6 +37,12 @@ DOCS_DIR.mkdir(parents=True, exist_ok=True)
 
 MAX_FILE_SIZE = 15 * 1024 * 1024  # 15MB
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt"}
+
+logger = logging.getLogger(__name__)
+
+AI_UNAVAILABLE_MESSAGE = (
+    "The AI service is temporarily unavailable. Please try again in a few minutes."
+)
 
 
 def _row_to_out(row: DocumentAssessment) -> DocumentAssessmentOut:
@@ -81,6 +89,9 @@ async def extract_document_assessment(
         context = await run_in_threadpool(extract_context, title, document_text)
     except ValueError as e:
         raise HTTPException(502, str(e))
+    except anthropic.AnthropicError:
+        logger.exception("Anthropic API call failed during document context extraction")
+        raise HTTPException(502, AI_UNAVAILABLE_MESSAGE)
 
     row = DocumentAssessment(
         id=assessment_id,
@@ -112,6 +123,9 @@ async def assess_document(assessment_id: str, payload: AssessFromContextRequest,
         )
     except ValueError as e:
         raise HTTPException(502, str(e))
+    except anthropic.AnthropicError:
+        logger.exception("Anthropic API call failed during document assessment")
+        raise HTTPException(502, AI_UNAVAILABLE_MESSAGE)
     result_dict = generated.model_dump()
 
     docx_path = await run_in_threadpool(

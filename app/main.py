@@ -1,6 +1,7 @@
 # app/main.py
 # FastAPI app: mounts routers, static frontend, session + rate-limit middleware.
 
+import logging
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -16,6 +17,8 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.config import SESSION_SECRET
 from app.routers import leads, industries, assessments, dashboard, admin, evidence, document_assessment
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PUBLIC_DIR = BASE_DIR / "public"
@@ -53,6 +56,19 @@ async def not_found_handler(request: Request, exc):
     if index.exists():
         return FileResponse(index)
     return JSONResponse(status_code=404, content={"ok": False, "errors": ["Not found."]})
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Last-resort safety net: without this, an unhandled exception on an /api
+    route falls through to Starlette's default plain-text 500 body, which
+    breaks every frontend that does `await res.json()` on the response (it
+    fails with a confusing 'JSON.parse: unexpected character' error instead
+    of surfacing the real problem)."""
+    logger.exception("Unhandled exception on %s", request.url.path)
+    if request.url.path.startswith("/api"):
+        return JSONResponse(status_code=500, content={"ok": False, "errors": ["Something went wrong. Please try again."]})
+    raise exc
 
 
 # Pretty routes for the multi-page frontend
