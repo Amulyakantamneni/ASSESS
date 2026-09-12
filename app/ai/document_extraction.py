@@ -4,9 +4,29 @@
 # yet. This is what the user reviews and can correct before Phase 2 (scoring,
 # in app/ai/document_maturity.py) runs against it.
 
+import pydantic
+
 from app.ai.claude_client import generate_structured
 from app.ai.prompt_templates import STYLE_DIRECTIVE
 from app.schemas import ExtractedContext
+
+NOT_A_CONTROLLED_DOCUMENT_MESSAGE = (
+    "This document doesn't appear to contain the kind of organizational, process, "
+    "or governance content this assessment evaluates. Please upload a procedure, "
+    "policy, manual, standard, or similar controlled document."
+)
+
+
+def _is_effectively_empty(context: ExtractedContext) -> bool:
+    """True when extraction came back with essentially nothing usable — the
+    document was readable but isn't the kind of controlled document this
+    assessment is for (e.g. a resume, invoice, or unrelated text)."""
+    signal_fields = [
+        context.organization_name, context.function, context.process_name,
+        context.process_purpose, context.governance_roles, context.document_title,
+    ]
+    signal_lists = [context.controls, context.risks, context.compliance_profile]
+    return not any(f.strip() for f in signal_fields) and not any(signal_lists)
 
 EXTRACTION_SYSTEM_PROMPT = (
     "You are a management-systems analyst preparing a document for an audit-grade "
@@ -54,7 +74,21 @@ def extract_context(document_title: str, tagged_text: str) -> ExtractedContext:
         f"Document text (tagged with [Page N] or [Section: ...] source markers):\n\n"
         f"{tagged_text}"
     )
-    return generate_structured(
-        system=EXTRACTION_SYSTEM_PROMPT, user=user, schema_model=ExtractedContext,
-        max_tokens=16000, stream=True,
-    )
+
+    context = None
+    for _ in range(2):  # one retry against a transient malformed/incomplete response
+        try:
+            context = generate_structured(
+                system=EXTRACTION_SYSTEM_PROMPT, user=user, schema_model=ExtractedContext,
+                max_tokens=16000, stream=True,
+            )
+            break
+        except pydantic.ValidationError:
+            continue
+    if context is None:
+        raise ValueError("Could not process this document. Please try again.")
+
+    if _is_effectively_empty(context):
+        raise ValueError(NOT_A_CONTROLLED_DOCUMENT_MESSAGE)
+
+    return context

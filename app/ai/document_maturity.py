@@ -5,6 +5,8 @@
 # (app/ai/document_extraction.py). Standalone from the Industry/Standard/
 # Template questionnaire flow elsewhere in app/ai.
 
+import pydantic
+
 from app.ai.claude_client import generate_structured
 from app.ai.prompt_templates import STYLE_DIRECTIVE
 from app.schemas import ExtractedContext, GeneratedDocumentAssessment
@@ -264,15 +266,14 @@ def generate_document_assessment(
 ) -> GeneratedDocumentAssessment:
     system, user = document_assessment_prompt(document_title, document_text, context)
 
-    result = None
-    for _ in range(2):  # one retry: this is a large generation and occasionally runs long
-        result = generate_structured(
-            system=system, user=user, schema_model=GeneratedDocumentAssessment, max_tokens=48000, stream=True,
-        )
+    for _ in range(2):  # one retry: this is a large generation and occasionally runs long or malformed
+        try:
+            result = generate_structured(
+                system=system, user=user, schema_model=GeneratedDocumentAssessment, max_tokens=48000, stream=True,
+            )
+        except pydantic.ValidationError:
+            continue
         if _is_complete(result):
             return result
 
-    raise ValueError(
-        "The assessment response was incomplete (likely cut off generating a large "
-        "document). Please try again."
-    )
+    raise ValueError("Could not complete the assessment. Please try again.")

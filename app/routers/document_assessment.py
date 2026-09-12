@@ -7,22 +7,27 @@
 # requirement, no daily cap (unlike the premium-tier full AI report elsewhere
 # in this app).
 #
-# Two-phase flow, matching the UI's upload -> review -> assess steps:
-#   POST /extract        -> saves the upload, extracts context, status=extracted
-#   POST /{id}/assess     -> scores against the (possibly user-corrected) context,
-#                            renders the docx, status=assessed
+# Two-phase flow, matching the UI's upload -> review -> assess steps. Both
+# phases run as a background task, not inline in the request: the Claude
+# calls take minutes, and a platform reverse proxy (e.g. Render's) will kill
+# a request held open that long and hand the frontend a non-JSON timeout
+# page instead of a real response. So:
+#   POST /extract         -> returns almost immediately, status=extracting
+#   GET /{id}              -> poll this for status -> extracted (or failed)
+#   POST /{id}/assess      -> returns almost immediately, status=assessing
+#   GET /{id}              -> poll this for status -> assessed (or failed)
 
 import logging
 import uuid
 from pathlib import Path
 
 import anthropic
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.concurrency import run_in_threadpool
 
-from app.db.session import get_db
+from app.db.session import SessionLocal, get_db
 from app.db.models import DocumentAssessment
 from app.schemas import DocumentAssessmentOut, AssessFromContextRequest, ExtractedContext
 from app.ai.document_ingest import extract_document_text
@@ -52,13 +57,87 @@ def _row_to_out(row: DocumentAssessment) -> DocumentAssessmentOut:
         original_filename=row.original_filename,
         created_at=row.created_at,
         status=row.status,
+        error_message=row.error_message,
         extracted_context=row.extracted_context or None,
         result=row.result or None,
     )
 
 
-@router.post("/extract", response_model=DocumentAssessmentOut, status_code=201)
+async def _run_extraction(assessment_id: str, contents: bytes, filename: str, title: str):
+    async with SessionLocal() as db:
+        row = await db.get(DocumentAssessment, assessment_id)
+        if not row:
+            return
+        try:
+            document_text = await run_in_threadpool(extract_document_text, contents, filename)
+            context = await run_in_threadpool(extract_context, title, document_text)
+        except ValueError as e:
+            row.status, row.error_message = "failed", str(e)
+            await db.commit()
+            return
+        except anthropic.AnthropicError:
+            logger.exception("Anthropic API call failed during document context extraction")
+            row.status, row.error_message = "failed", AI_UNAVAILABLE_MESSAGE
+            await db.commit()
+            return
+        except Exception:
+            logger.exception("Unexpected failure during document context extraction")
+            row.status, row.error_message = "failed", "Something went wrong while reading this document. Please try again."
+            await db.commit()
+            return
+
+        row.document_text = document_text
+        row.extracted_context = context.model_dump()
+        row.status = "extracted"
+        await db.commit()
+
+
+async def _run_assessment(assessment_id: str, context: ExtractedContext):
+    async with SessionLocal() as db:
+        row = await db.get(DocumentAssessment, assessment_id)
+        if not row:
+            return
+        try:
+            generated = await run_in_threadpool(
+                generate_document_assessment, row.document_title, row.document_text, context,
+            )
+        except ValueError as e:
+            row.status, row.error_message = "failed", str(e)
+            await db.commit()
+            return
+        except anthropic.AnthropicError:
+            logger.exception("Anthropic API call failed during document assessment")
+            row.status, row.error_message = "failed", AI_UNAVAILABLE_MESSAGE
+            await db.commit()
+            return
+        except Exception:
+            logger.exception("Unexpected failure during document assessment")
+            row.status, row.error_message = "failed", "Something went wrong while assessing this document. Please try again."
+            await db.commit()
+            return
+
+        result_dict = generated.model_dump()
+        try:
+            docx_path = await run_in_threadpool(
+                render_document_assessment_docx,
+                assessment_id=row.id, document_title=row.document_title, original_filename=row.original_filename,
+                result=result_dict, context=context.model_dump(),
+            )
+        except Exception:
+            logger.exception("Failed to render the document assessment .docx")
+            row.status, row.error_message = "failed", "Something went wrong while generating the report. Please try again."
+            await db.commit()
+            return
+
+        row.result = result_dict
+        row.docx_file_path = docx_path
+        row.status = "assessed"
+        await db.commit()
+
+
+@router.post("/extract", response_model=DocumentAssessmentOut, status_code=202)
 async def extract_document_assessment(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     document_title: str = Form(""),
     db: AsyncSession = Depends(get_db),
@@ -71,11 +150,6 @@ async def extract_document_assessment(
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(400, "File too large. Maximum size is 15MB.")
 
-    try:
-        document_text = await run_in_threadpool(extract_document_text, contents, file.filename or "")
-    except ValueError as e:
-        raise HTTPException(400, str(e))
-
     title = document_title.strip() or Path(file.filename or "Document").stem
 
     assessment_id = uuid.uuid4().hex[:16]
@@ -85,61 +159,38 @@ async def extract_document_assessment(
     file_path = assessment_dir / stored_name
     file_path.write_bytes(contents)
 
-    try:
-        context = await run_in_threadpool(extract_context, title, document_text)
-    except ValueError as e:
-        raise HTTPException(502, str(e))
-    except anthropic.AnthropicError:
-        logger.exception("Anthropic API call failed during document context extraction")
-        raise HTTPException(502, AI_UNAVAILABLE_MESSAGE)
-
     row = DocumentAssessment(
         id=assessment_id,
         document_title=title,
         original_filename=file.filename or stored_name,
         file_path=str(file_path),
-        document_text=document_text,
-        status="extracted",
-        extracted_context=context.model_dump(),
+        status="extracting",
     )
     db.add(row)
     await db.commit()
     await db.refresh(row)
 
+    background_tasks.add_task(_run_extraction, assessment_id, contents, file.filename or "", title)
+
     return _row_to_out(row)
 
 
-@router.post("/{assessment_id}/assess", response_model=DocumentAssessmentOut)
-async def assess_document(assessment_id: str, payload: AssessFromContextRequest, db: AsyncSession = Depends(get_db)):
+@router.post("/{assessment_id}/assess", response_model=DocumentAssessmentOut, status_code=202)
+async def assess_document(
+    assessment_id: str, payload: AssessFromContextRequest,
+    background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db),
+):
     row = await db.get(DocumentAssessment, assessment_id)
     if not row:
         raise HTTPException(404, "Document assessment not found.")
 
     row.corrected_context = payload.context.model_dump()
-
-    try:
-        generated = await run_in_threadpool(
-            generate_document_assessment, row.document_title, row.document_text, payload.context,
-        )
-    except ValueError as e:
-        raise HTTPException(502, str(e))
-    except anthropic.AnthropicError:
-        logger.exception("Anthropic API call failed during document assessment")
-        raise HTTPException(502, AI_UNAVAILABLE_MESSAGE)
-    result_dict = generated.model_dump()
-
-    docx_path = await run_in_threadpool(
-        render_document_assessment_docx,
-        assessment_id=row.id, document_title=row.document_title, original_filename=row.original_filename,
-        result=result_dict, context=payload.context.model_dump(),
-    )
-
-    row.result = result_dict
-    row.docx_file_path = docx_path
-    row.status = "assessed"
-
+    row.status = "assessing"
+    row.error_message = ""
     await db.commit()
     await db.refresh(row)
+
+    background_tasks.add_task(_run_assessment, assessment_id, payload.context)
 
     return _row_to_out(row)
 

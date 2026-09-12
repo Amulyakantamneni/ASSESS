@@ -392,6 +392,7 @@ class DocumentAssessmentOut(BaseModel):
     original_filename: str
     created_at: datetime
     status: str
+    error_message: str = ""
     extracted_context: ExtractedContext | None = None
     result: GeneratedDocumentAssessment | None = None
 

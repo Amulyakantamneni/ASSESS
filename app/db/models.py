@@ -177,7 +177,14 @@ class DocumentAssessment(Base):
     Two-phase flow: "extract" produces extracted_context for the user to
     review/correct; "assess" consumes that (corrected_context if the user
     edited anything, else extracted_context) alongside document_text to
-    produce the final result and docx."""
+    produce the final result and docx.
+
+    Both phases run as a FastAPI BackgroundTask, not inline in the request:
+    the Claude calls take minutes, and a platform reverse proxy (e.g.
+    Render's) will kill a request held open that long and hand the frontend
+    a non-JSON timeout page. The POST endpoints return almost immediately
+    with status=extracting/assessing; the frontend polls GET /{id} for
+    status to flip to extracted/assessed (or failed, with error_message)."""
     __tablename__ = "document_assessments"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
@@ -186,7 +193,8 @@ class DocumentAssessment(Base):
     original_filename: Mapped[str] = mapped_column(String, nullable=False)
     file_path: Mapped[str] = mapped_column(String, nullable=False)
     document_text: Mapped[str] = mapped_column(Text, default="")
-    status: Mapped[str] = mapped_column(String, default="extracted")  # extracted|assessed
+    status: Mapped[str] = mapped_column(String, default="extracting")  # extracting|extracted|assessing|assessed|failed
+    error_message: Mapped[str] = mapped_column(Text, default="")
     extracted_context: Mapped[dict] = mapped_column(JSON, default=dict)
     corrected_context: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     result: Mapped[dict] = mapped_column(JSON, default=dict)

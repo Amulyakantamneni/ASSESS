@@ -205,9 +205,11 @@ function renderUploadForm(errorMessage) {
                 if (!res.ok) throw new Error(data.errors ? data.errors.join(' ') : (data.detail || 'Extraction failed.'));
                 state.assessmentId = data.id;
                 state.documentTitle = data.document_title;
-                state.context = data.extracted_context;
-                goTo(1);
-                renderReview();
+                pollAssessment(data.id, 'extracted', (finalData) => {
+                    state.context = finalData.extracted_context;
+                    goTo(1);
+                    renderReview();
+                }, (errorMessage) => { goTo(0); renderUploadForm(errorMessage); });
             })
             .catch((err) => { goTo(0); renderUploadForm(err.message || 'Something went wrong. Please try again.'); });
     }
@@ -239,6 +241,25 @@ function renderLoading(messages) {
         if (!document.body.contains(line)) { clearInterval(timer); return; }
         line.textContent = messages[i];
     }, 2200);
+}
+
+// Both /extract and /assess kick off a background job and return almost
+// immediately (status=extracting/assessing) — a platform reverse proxy will
+// kill a request held open for the several minutes the real AI call takes,
+// handing the frontend a non-JSON error page instead of a response. So we
+// poll GET /{id} for the job to finish instead of awaiting one long fetch.
+function pollAssessment(assessmentId, terminalStatus, onDone, onFailed) {
+    const poll = () => {
+        fetch(`${API_BASE}/document-assessments/${assessmentId}`)
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.status === terminalStatus) return onDone(data);
+                if (data.status === 'failed') return onFailed(data.error_message || 'Something went wrong. Please try again.');
+                setTimeout(poll, 3000);
+            })
+            .catch(() => setTimeout(poll, 5000)); // transient network hiccup — keep polling
+    };
+    setTimeout(poll, 3000);
 }
 
 // ---------------- Step 1: Review Extracted Context ----------------
@@ -358,9 +379,11 @@ function renderReview() {
         }).then(async (res) => {
             const data = await res.json();
             if (!res.ok) throw new Error(data.errors ? data.errors.join(' ') : (data.detail || 'Assessment failed.'));
-            state.result = data.result;
-            goTo(2);
-            renderDashboard();
+            pollAssessment(state.assessmentId, 'assessed', (finalData) => {
+                state.result = finalData.result;
+                goTo(2);
+                renderDashboard();
+            }, (errorMessage) => { goTo(1); renderReview(); alert(errorMessage); });
         }).catch((err) => { goTo(1); renderReview(); alert(err.message || 'Something went wrong. Please try again.'); });
     });
 }
