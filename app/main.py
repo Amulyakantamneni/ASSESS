@@ -15,7 +15,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
 from app.config import SESSION_SECRET
-from app.routers import leads, industries, assessments, dashboard, admin, evidence
+from app.routers import leads, industries, assessments, dashboard, admin, evidence, document_assessment
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 PUBLIC_DIR = BASE_DIR / "public"
@@ -36,6 +36,7 @@ app.include_router(assessments.router)
 app.include_router(dashboard.router)
 app.include_router(admin.router)
 app.include_router(evidence.router)
+app.include_router(document_assessment.router)
 
 
 @app.get("/api/health")
@@ -68,6 +69,11 @@ async def assessment_page():
 @app.get("/connect")
 async def connect_page():
     return FileResponse(PUBLIC_DIR / "connect.html")
+
+
+@app.get("/document-assessment")
+async def document_assessment_page():
+    return FileResponse(PUBLIC_DIR / "document-assessment.html")
 
 
 @app.get("/admin")

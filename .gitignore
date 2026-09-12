@@ -10,3 +10,4 @@ __pycache__/
 data/*.db
 data/reports/*.docx
 data/evidence/
+data/document_assessments/

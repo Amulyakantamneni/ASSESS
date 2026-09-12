@@ -76,6 +76,10 @@ Then open **http://localhost:8000**.
 - `POST /api/leads`, `GET /api/leads`
 - `GET /api/dashboard/stats`
 - `POST /api/admin/login`, CRUD under `/api/admin/{industries,standards,templates,questions}`
+- `POST /api/document-assessments` — `multipart: file, document_title?, email?` → a Controlled Document
+  Maturity Assessment (upload a procedure/policy/standard, no questionnaire) scored against a fixed
+  15-category rubric
+- `GET /api/document-assessments/{id}`, `GET /api/document-assessments/{id}/report.docx`
 
 Interactive docs at `/docs` (FastAPI auto-generated).
 
@@ -87,6 +91,5 @@ Interactive docs at `/docs` (FastAPI auto-generated).
 
 ## Not yet built
 
-- Document-upload / RAG assessment mode (Mode 2 from the original spec)
 - Real payments — everything is free with the daily AI-report cap
 - End-user accounts/login — assessment continuity is by email, not auth

@@ -25,12 +25,15 @@ def get_client() -> Anthropic:
 T = TypeVar("T", bound=BaseModel)
 
 
-def generate_structured(*, system: str, user: str, schema_model: type[T], max_tokens: int = 4096) -> T:
-    """Call Claude with a strict JSON schema and return a validated Pydantic instance."""
+def generate_structured(*, system: str, user: str, schema_model: type[T], max_tokens: int = 4096, stream: bool = False) -> T:
+    """Call Claude with a strict JSON schema and return a validated Pydantic instance.
+
+    Pass stream=True for large max_tokens calls — the SDK refuses a non-streaming
+    request outright once the requested max_tokens implies a generation that could
+    run past its 10-minute non-streaming cap."""
     client = get_client()
     schema = schema_model.model_json_schema()
-
-    response = client.messages.create(
+    kwargs = dict(
         model=MODEL,
         max_tokens=max_tokens,
         system=system,
@@ -42,6 +45,12 @@ def generate_structured(*, system: str, user: str, schema_model: type[T], max_to
             }
         },
     )
+
+    if stream:
+        with client.messages.stream(**kwargs) as s:
+            response = s.get_final_message()
+    else:
+        response = client.messages.create(**kwargs)
 
     text_block = next((b for b in response.content if b.type == "text"), None)
     if text_block is None:

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Document Maturity Assessment | MaturityAssess</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+    .flow-wrap { max-width: 960px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+
+    .panel { background: white; border-radius: 14px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid var(--border); }
+    .panel h2 { color: var(--primary); margin-bottom: 0.5rem; font-size: 1.6rem; }
+    .panel .hint { color: var(--muted); margin-bottom: 1.75rem; }
+
+    .upload-drop {
+        display: block; border: 2px dashed var(--border); border-radius: 12px; padding: 2.5rem 1.5rem; text-align: center;
+        cursor: pointer; transition: all 0.2s ease; margin-bottom: 1.25rem;
+    }
+    .upload-drop:hover, .upload-drop.dragover { border-color: var(--accent); background: var(--light-accent); }
+    .upload-drop input[type="file"] { display: none; }
+    .upload-drop .ud-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .upload-drop .ud-file { font-weight: 700; color: var(--primary); margin-top: 0.5rem; }
+    .upload-drop .ud-hint { color: var(--muted); font-size: 0.85rem; margin-top: 0.35rem; }
+
+    .loading-panel { text-align: center; padding: 3rem 1rem; }
+    .spinner { width: 48px; height: 48px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; margin: 0 auto 1.25rem; animation: spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-box { background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; font-size: 0.9rem; }
+
+    .results-level { text-align: center; padding: 1.5rem; border-radius: 12px; background: var(--light-accent); margin-bottom: 1.5rem; }
+    .results-level .level-name { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
+    .score-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.75rem; }
+    .score-card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; text-align: center; }
+    .score-card .val { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+    .score-card .lbl { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-top: 0.3rem; }
+
+    .results-section { margin-top: 2.75rem; padding-top: 2.75rem; border-top: 1px solid var(--border); }
+    .results-section:first-of-type { margin-top: 2rem; padding-top: 0; border-top: none; }
+    .results-section h3 { color: var(--primary); font-size: 1.35rem; margin-bottom: 0.4rem; }
+    .results-section .section-note { color: var(--muted); font-size: 0.88rem; margin-bottom: 1.25rem; }
+
+    .sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 640px) { .sw-grid { grid-template-columns: 1fr; } }
+    .sw-col h4 { font-size: 1rem; margin-bottom: 0.75rem; }
+    .sw-col.strengths h4 { color: var(--success); }
+    .sw-col.weaknesses h4 { color: var(--danger); }
+    .sw-col ul { margin: 0; padding-left: 1.2rem; color: var(--dark); font-size: 0.9rem; }
+    .sw-col li { margin-bottom: 0.5rem; }
+
+    .doc-table-wrap { overflow-x: auto; margin-bottom: 1rem; }
+    table.doc-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    table.doc-table th, table.doc-table td { border: 1px solid var(--border); padding: 0.6rem 0.7rem; text-align: left; vertical-align: top; }
+    table.doc-table th { background: var(--light); color: var(--primary); }
+    .score-pill { display: inline-block; min-width: 1.8rem; text-align: center; padding: 0.2rem 0.5rem; border-radius: 999px; font-weight: 800; color: white; }
+    .quick-win-badge { background: var(--success); color: white; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; }
+
+    .conclusion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
+    @media (max-width: 640px) { .conclusion-grid { grid-template-columns: 1fr; } }
+    .conclusion-card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; }
+    .conclusion-card .lbl { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.3rem; }
+    .conclusion-card .val { font-weight: 700; color: var(--primary); }
+</style>
+</head>
+<body>
+<div class="scroll-progress" id="scrollProgress"></div>
+<nav id="mainNav">
+    <div class="nav-container">
+        <a href="/" class="logo">MaturityAssess</a>
+        <div class="nav-group">
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-btn">Industries <span class="caret">▾</span></button>
+                <div class="nav-dropdown-menu" id="navIndustryMenu"><span class="menu-group-label">Loading…</span></div>
+            </div>
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-btn">Learn More <span class="caret">▾</span></button>
+                <div class="nav-dropdown-menu">
+                    <a href="/learn/cmm.html">What is CMM?</a>
+                    <a href="/learn/iso.html">ISO Assessments</a>
+                    <a href="/learn/security.html">Security Assessments</a>
+                    <a href="/learn/process-maturity.html">Process Maturity Assessments</a>
+                    <a href="/learn/compliance.html">Compliance Assessments</a>
+                </div>
+            </div>
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-btn">Connect With Us <span class="caret">▾</span></button>
+                <div class="nav-dropdown-menu">
+                    <a href="/connect#schedule">Schedule a 15-min Consultation</a>
+                    <a href="/connect#contact">Contact / Email Us</a>
+                </div>
+            </div>
+            <a href="/assessment" class="btn btn-outline btn-sm">Start Questionnaire Assessment</a>
+        </div>
+    </div>
+</nav>
+
+<div class="flow-wrap">
+    <div id="panelHost"></div>
+</div>
+
+<script src="/app.js"></script>
+
+<footer>
+    <p>&copy; 2026 MaturityAssess.</p>
+    <p style="margin-top:1rem;opacity:0.7;font-size:0.9rem;"><a href="/">Home</a> · <a href="/connect">Connect With Us</a> · <a href="/dashboard">Dashboard</a></p>
+</footer>
+<button class="back-to-top" id="backToTop" aria-label="Back to top">↑</button>
+
+<script>
+const panelHost = document.getElementById('panelHost');
+let selectedFile = null;
+let currentResult = null;
+let currentAssessmentId = null;
+
+function renderUploadForm(errorMessage) {
+    panelHost.innerHTML = `
+        <div class="panel panel-fade">
+            <h2>Controlled Document Maturity Assessment</h2>
+            <p class="hint">Upload a procedure, policy, manual, framework, standard, work instruction, or guideline.
+            It's scored against a fixed 15-category maturity rubric and returned as a full audit-grade report.
+            Accepts .pdf, .docx, or .txt, up to 15MB.</p>
+            ${errorMessage ? `<div class="error-box">${escapeHtml(errorMessage)}</div>` : ''}
+            <label class="upload-drop" id="uploadDrop">
+                <input type="file" id="fileInput" accept=".pdf,.docx,.txt">
+                <div class="ud-icon">📄</div>
+                <div id="uploadDropLabel">Click to choose a file, or drag one here</div>
+                <div class="ud-hint">Assessment starts automatically once a file is selected</div>
+            </label>
+        </div>
+    `;
+
+    const drop = document.getElementById('uploadDrop');
+    const input = document.getElementById('fileInput');
+
+    function onFileChosen(file) {
+        selectedFile = file;
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('document_title', file.name.replace(/\.[^.]+$/, ''));
+        renderLoading();
+        fetch(`${API_BASE}/document-assessments`, { method: 'POST', body: formData })
+            .then(async (res) => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.errors ? data.errors.join(' ') : (data.detail || 'Assessment failed.'));
+                currentResult = data.result;
+                currentAssessmentId = data.id;
+                renderResults(data);
+            })
+            .catch((err) => renderUploadForm(err.message || 'Something went wrong. Please try again.'));
+    }
+
+    input.addEventListener('change', () => { if (input.files[0]) onFileChosen(input.files[0]); });
+    drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('dragover'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+    drop.addEventListener('drop', (e) => {
+        e.preventDefault();
+        drop.classList.remove('dragover');
+        if (e.dataTransfer.files[0]) onFileChosen(e.dataTransfer.files[0]);
+    });
+}
+
+function renderLoading() {
+    panelHost.innerHTML = `
+        <div class="panel loading-panel">
+            <div class="spinner"></div>
+            <h2>Analyzing your document…</h2>
+            <p class="hint">This is a full audit-grade assessment with detailed findings for every category, so it can take a few minutes — please don't close this tab.</p>
+        </div>
+    `;
+}
+
+const HEAT_MAP = {
+    5: { color: '#1F4E79', meaning: 'Excellent' },
+    4: { color: '#2E7D32', meaning: 'Strong' },
+    3: { color: '#F2C94C', meaning: 'Adequate' },
+    2: { color: '#F2994A', meaning: 'Weak' },
+    1: { color: '#EB5757', meaning: 'Critical Deficiency' },
+};
+function scoreColor(score) { return (HEAT_MAP[score] || {}).color || '#9CA3AF'; }
+function scoreMeaning(score) { return (HEAT_MAP[score] || {}).meaning || 'Unscored'; }
+
+function renderResults(data) {
+    const r = data.result;
+    panelHost.innerHTML = `
+        <div class="panel panel-fade">
+            <h2>${escapeHtml(data.document_title)}</h2>
+            <p class="hint">Controlled Document Maturity Assessment</p>
+
+            <div class="results-level">
+                <div class="level-name">${escapeHtml(r.overall_maturity_level)}</div>
+            </div>
+            <div class="score-cards">
+                <div class="score-card"><div class="val">${r.overall_maturity_score}/5</div><div class="lbl">Overall Score</div></div>
+                <div class="score-card"><div class="val">${r.overall_readiness_pct}%</div><div class="lbl">Readiness</div></div>
+                <div class="score-card"><div class="val">${r.category_scores.length}</div><div class="lbl">Categories Assessed</div></div>
+            </div>
+
+            <div class="results-section">
+                <h3>Overall Assessment</h3>
+                <p>${escapeHtml(r.overall_assessment)}</p>
+            </div>
+
+            <div class="results-section">
+                <h3>Highest &amp; Lowest Scoring Areas</h3>
+                <p><strong>Highest:</strong> ${escapeHtml(r.highest_scoring_areas.join(', ') || 'None')}</p>
+                <p><strong>Lowest:</strong> ${escapeHtml(r.lowest_scoring_areas.join(', ') || 'None')}</p>
+            </div>
+
+            <div class="results-section">
+                <h3>Key Strengths &amp; Weaknesses</h3>
+                <div class="sw-grid">
+                    <div class="sw-col strengths">
+                        <h4>Strengths</h4>
+                        <ul>${r.key_strengths.map((s) => `<li>${escapeHtml(s)}</li>`).join('') || '<li>None identified</li>'}</ul>
+                    </div>
+                    <div class="sw-col weaknesses">
+                        <h4>Weaknesses</h4>
+                        <ul>${r.key_weaknesses.map((s) => `<li>${escapeHtml(s)}</li>`).join('') || '<li>None identified</li>'}</ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h3>Detailed Assessment Table</h3>
+                <p class="section-note">Every category scored 1 (Initial/Ad Hoc) to 5 (Optimized/Best Practice).</p>
+                <div class="doc-table-wrap">
+                    <table class="doc-table">
+                        <thead><tr><th>Category</th><th>Score</th><th>Evidence Found</th><th>Gaps Identified</th><th>Recommendation</th><th>Heat Map</th></tr></thead>
+                        <tbody>
+                            ${r.category_scores.map((c) => `
+                                <tr>
+                                    <td>${escapeHtml(c.category)}</td>
+                                    <td><span class="score-pill" style="background:${scoreColor(c.score)}">${c.score}</span></td>
+                                    <td>${escapeHtml(c.evidence_found)}</td>
+                                    <td>${escapeHtml(c.gaps_identified)}</td>
+                                    <td>${escapeHtml(c.recommendation)}</td>
+                                    <td><span class="score-pill" style="background:${scoreColor(c.score)}">${escapeHtml(scoreMeaning(c.score))}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h3>Top Improvement Recommendations</h3>
+                <div class="doc-table-wrap">
+                    <table class="doc-table">
+                        <thead><tr><th>Recommendation</th><th>Business Benefit</th><th>Risk if Not Addressed</th><th>Priority</th><th>Est. Maturity Gain</th><th>Quick Win</th></tr></thead>
+                        <tbody>
+                            ${r.top_recommendations.map((rec) => `
+                                <tr>
+                                    <td>${escapeHtml(rec.recommendation)}</td>
+                                    <td>${escapeHtml(rec.business_benefit)}</td>
+                                    <td>${escapeHtml(rec.risk_if_not_addressed)}</td>
+                                    <td>${escapeHtml(rec.priority)}</td>
+                                    <td>${escapeHtml(rec.estimated_maturity_gain)}</td>
+                                    <td>${rec.quick_win ? '<span class="quick-win-badge">Quick Win</span>' : ''}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h3>Management Conclusion</h3>
+                <div class="conclusion-grid">
+                    <div class="conclusion-card"><div class="lbl">Current Maturity Level</div><div class="val">${escapeHtml(r.current_maturity_level)}</div></div>
+                    <div class="conclusion-card"><div class="lbl">Target Maturity Level</div><div class="val">${escapeHtml(r.target_maturity_level)}</div></div>
+                </div>
+                <p>${escapeHtml(r.roadmap_to_level_5)}</p>
+            </div>
+
+            <div class="results-section">
+                <a class="btn btn-primary" href="${API_BASE}/document-assessments/${data.id}/report.docx">Download Full Report (.docx)</a>
+                <button class="btn btn-secondary" id="startOverBtn" style="margin-left:0.75rem;">Assess Another Document</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('startOverBtn').addEventListener('click', () => {
+        selectedFile = null;
+        renderUploadForm();
+    });
+}
+
+renderUploadForm();
+</script>
+</body>
+</html>

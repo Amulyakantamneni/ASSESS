@@ -168,6 +168,23 @@ class FrameworkCrosswalk(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
+class DocumentAssessment(Base):
+    """A standalone controlled-document maturity assessment: upload a procedure,
+    policy, or similar document and get it scored against the fixed 15-category
+    rubric directly, with no questionnaire involved. Unrelated to the
+    Industry/Standard/Template/Assessment flow above."""
+    __tablename__ = "document_assessments"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
+    email: Mapped[str | None] = mapped_column(String, nullable=True)
+    document_title: Mapped[str] = mapped_column(String, nullable=False)
+    original_filename: Mapped[str] = mapped_column(String, nullable=False)
+    file_path: Mapped[str] = mapped_column(String, nullable=False)
+    result: Mapped[dict] = mapped_column(JSON, default=dict)
+    docx_file_path: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class Lead(Base):
     __tablename__ = "leads"
 

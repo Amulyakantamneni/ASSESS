@@ -224,6 +224,59 @@ class CrosswalkOut(BaseModel):
     mappings: list[CrosswalkEntry] = Field(default_factory=list)
 
 
+# ---------- Controlled Document Maturity Assessment ----------
+# Standalone flow: upload a document, score it against a fixed 15-category
+# rubric. Unrelated to the Industry/Standard/Template questionnaire above.
+
+DocumentPriority = Literal["High", "Medium", "Low"]
+
+
+class DocumentCategoryScore(StrictModel):
+    category: str
+    score: int
+    evidence_found: str
+    gaps_identified: str
+    recommendation: str
+
+
+class DocumentImprovementRecommendation(StrictModel):
+    recommendation: str
+    business_benefit: str
+    risk_if_not_addressed: str
+    priority: DocumentPriority
+    estimated_maturity_gain: str
+    quick_win: bool
+
+
+class GeneratedDocumentAssessment(StrictModel):
+    # Ordered so the most important structured content (the 15 category
+    # scores and the 10 recommendations) is generated before the more
+    # verbose narrative fields — if a very long document ever pushes the
+    # response toward the token ceiling, it's the narrative prose that gets
+    # cut short, not the categories the rest of the report depends on.
+    overall_maturity_score: float
+    overall_maturity_level: str
+    category_scores: list[DocumentCategoryScore]
+    top_recommendations: list[DocumentImprovementRecommendation]
+    highest_scoring_areas: list[str]
+    lowest_scoring_areas: list[str]
+    key_strengths: list[str]
+    key_weaknesses: list[str]
+    overall_assessment: str
+    current_maturity_level: str
+    target_maturity_level: str
+    roadmap_to_level_5: str
+    overall_readiness_pct: float
+
+
+class DocumentAssessmentOut(BaseModel):
+    id: str
+    document_title: str
+    original_filename: str
+    created_at: datetime
+    result: GeneratedDocumentAssessment
+
+
 # ---------- Leads ----------
 
 class LeadIn(BaseModel):
