@@ -1,10 +1,16 @@
 # app/routers/document_assessment.py
 # Controlled Document Maturity Assessment: upload a procedure/policy/standard,
-# get it scored against the fixed 15-category rubric in app/ai/document_maturity.py.
-# Standalone from the Industry/Standard/Template questionnaire flow in
-# assessments.py — there's no questionnaire here, the document is the input.
-# Open to anyone: no email requirement, no daily cap (unlike the premium-tier
-# full AI report elsewhere in this app).
+# review the extracted context, then get it scored against the fixed
+# 15-category rubric in app/ai/document_maturity.py. Standalone from the
+# Industry/Standard/Template questionnaire flow in assessments.py — there's no
+# questionnaire here, the document is the input. Open to anyone: no email
+# requirement, no daily cap (unlike the premium-tier full AI report elsewhere
+# in this app).
+#
+# Two-phase flow, matching the UI's upload -> review -> assess steps:
+#   POST /extract        -> saves the upload, extracts context, status=extracted
+#   POST /{id}/assess     -> scores against the (possibly user-corrected) context,
+#                            renders the docx, status=assessed
 
 import uuid
 from pathlib import Path
@@ -16,8 +22,10 @@ from starlette.concurrency import run_in_threadpool
 
 from app.db.session import get_db
 from app.db.models import DocumentAssessment
-from app.schemas import DocumentAssessmentOut
-from app.ai.document_maturity import extract_document_text, generate_document_assessment
+from app.schemas import DocumentAssessmentOut, AssessFromContextRequest, ExtractedContext
+from app.ai.document_ingest import extract_document_text
+from app.ai.document_extraction import extract_context
+from app.ai.document_maturity import generate_document_assessment
 from app.ai.document_report import render_document_assessment_docx, download_filename
 
 router = APIRouter(prefix="/api/document-assessments", tags=["document-assessment"])
@@ -35,15 +43,16 @@ def _row_to_out(row: DocumentAssessment) -> DocumentAssessmentOut:
         document_title=row.document_title,
         original_filename=row.original_filename,
         created_at=row.created_at,
-        result=row.result,
+        status=row.status,
+        extracted_context=row.extracted_context or None,
+        result=row.result or None,
     )
 
 
-@router.post("", response_model=DocumentAssessmentOut, status_code=201)
-async def create_document_assessment(
+@router.post("/extract", response_model=DocumentAssessmentOut, status_code=201)
+async def extract_document_assessment(
     file: UploadFile = File(...),
     document_title: str = Form(""),
-    email: str = Form(""),
     db: AsyncSession = Depends(get_db),
 ):
     ext = Path(file.filename or "").suffix.lower()
@@ -55,7 +64,7 @@ async def create_document_assessment(
         raise HTTPException(400, "File too large. Maximum size is 15MB.")
 
     try:
-        document_text = extract_document_text(contents, file.filename or "")
+        document_text = await run_in_threadpool(extract_document_text, contents, file.filename or "")
     except ValueError as e:
         raise HTTPException(400, str(e))
 
@@ -69,29 +78,52 @@ async def create_document_assessment(
     file_path.write_bytes(contents)
 
     try:
-        # This is a large, multi-minute Claude call — run it off the event loop
-        # thread so it doesn't stall every other request on the server while it's
-        # in flight (the Anthropic SDK call itself is synchronous).
-        generated = await run_in_threadpool(generate_document_assessment, title, document_text)
+        context = await run_in_threadpool(extract_context, title, document_text)
+    except ValueError as e:
+        raise HTTPException(502, str(e))
+
+    row = DocumentAssessment(
+        id=assessment_id,
+        document_title=title,
+        original_filename=file.filename or stored_name,
+        file_path=str(file_path),
+        document_text=document_text,
+        status="extracted",
+        extracted_context=context.model_dump(),
+    )
+    db.add(row)
+    await db.commit()
+    await db.refresh(row)
+
+    return _row_to_out(row)
+
+
+@router.post("/{assessment_id}/assess", response_model=DocumentAssessmentOut)
+async def assess_document(assessment_id: str, payload: AssessFromContextRequest, db: AsyncSession = Depends(get_db)):
+    row = await db.get(DocumentAssessment, assessment_id)
+    if not row:
+        raise HTTPException(404, "Document assessment not found.")
+
+    row.corrected_context = payload.context.model_dump()
+
+    try:
+        generated = await run_in_threadpool(
+            generate_document_assessment, row.document_title, row.document_text, payload.context,
+        )
     except ValueError as e:
         raise HTTPException(502, str(e))
     result_dict = generated.model_dump()
 
-    row = DocumentAssessment(
-        id=assessment_id,
-        email=(email.strip().lower() or None),
-        document_title=title,
-        original_filename=file.filename or stored_name,
-        file_path=str(file_path),
-        result=result_dict,
+    docx_path = await run_in_threadpool(
+        render_document_assessment_docx,
+        assessment_id=row.id, document_title=row.document_title, original_filename=row.original_filename,
+        result=result_dict, context=payload.context.model_dump(),
     )
 
-    docx_path = render_document_assessment_docx(
-        assessment_id=assessment_id, document_title=title, result=result_dict,
-    )
+    row.result = result_dict
     row.docx_file_path = docx_path
+    row.status = "assessed"
 
-    db.add(row)
     await db.commit()
     await db.refresh(row)
 

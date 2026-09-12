@@ -6,7 +6,15 @@
 <title>Document Maturity Assessment | MaturityAssess</title>
 <link rel="stylesheet" href="/style.css">
 <style>
-    .flow-wrap { max-width: 960px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+    .flow-wrap { max-width: 1040px; margin: 0 auto; padding: 3rem 2rem 6rem; }
+
+    .stepper { display: flex; justify-content: space-between; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 0.5rem; }
+    .stepper .step-pill {
+        flex: 1; min-width: 120px; text-align: center; padding: 0.65rem 0.5rem; border-radius: 8px;
+        font-size: 0.82rem; font-weight: 600; color: var(--muted); background: white; border: 1px solid var(--border);
+    }
+    .stepper .step-pill.active { color: var(--primary); border-color: var(--accent); background: var(--light-accent); }
+    .stepper .step-pill.done { color: white; background: var(--success); border-color: var(--success); }
 
     .panel { background: white; border-radius: 14px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid var(--border); }
     .panel h2 { color: var(--primary); margin-bottom: 0.5rem; font-size: 1.6rem; }
@@ -25,24 +33,26 @@
     .loading-panel { text-align: center; padding: 3rem 1rem; }
     .spinner { width: 48px; height: 48px; border: 4px solid var(--border); border-top-color: var(--primary); border-radius: 50%; margin: 0 auto 1.25rem; animation: spin 0.9s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-line { color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem; min-height: 1.4em; }
 
     .error-box { background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B; border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; font-size: 0.9rem; }
 
     .results-level { text-align: center; padding: 1.5rem; border-radius: 12px; background: var(--light-accent); margin-bottom: 1.5rem; }
     .results-level .level-name { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
-    .score-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.75rem; }
+    .score-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.75rem; }
     .score-card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; text-align: center; }
-    .score-card .val { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
-    .score-card .lbl { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-top: 0.3rem; }
+    .score-card .val { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+    .score-card .lbl { font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-top: 0.3rem; }
 
     .results-section { margin-top: 2.75rem; padding-top: 2.75rem; border-top: 1px solid var(--border); }
     .results-section:first-of-type { margin-top: 2rem; padding-top: 0; border-top: none; }
     .results-section h3 { color: var(--primary); font-size: 1.35rem; margin-bottom: 0.4rem; }
+    .results-section h4 { color: var(--primary); font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
     .results-section .section-note { color: var(--muted); font-size: 0.88rem; margin-bottom: 1.25rem; }
 
     .sw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
     @media (max-width: 640px) { .sw-grid { grid-template-columns: 1fr; } }
-    .sw-col h4 { font-size: 1rem; margin-bottom: 0.75rem; }
+    .sw-col h4 { font-size: 1rem; margin-bottom: 0.75rem; margin-top: 0; }
     .sw-col.strengths h4 { color: var(--success); }
     .sw-col.weaknesses h4 { color: var(--danger); }
     .sw-col ul { margin: 0; padding-left: 1.2rem; color: var(--dark); font-size: 0.9rem; }
@@ -54,12 +64,36 @@
     table.doc-table th { background: var(--light); color: var(--primary); }
     .score-pill { display: inline-block; min-width: 1.8rem; text-align: center; padding: 0.2rem 0.5rem; border-radius: 999px; font-weight: 800; color: white; }
     .quick-win-badge { background: var(--success); color: white; font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; }
+    .priority-badge { font-size: 0.72rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 999px; color: white; }
 
     .conclusion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
     @media (max-width: 640px) { .conclusion-grid { grid-template-columns: 1fr; } }
     .conclusion-card { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; }
     .conclusion-card .lbl { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.3rem; }
     .conclusion-card .val { font-weight: 700; color: var(--primary); }
+
+    /* Review-context form */
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem; }
+    @media (max-width: 640px) { .field-grid { grid-template-columns: 1fr; } }
+    .field-group { display: flex; flex-direction: column; gap: 0.3rem; }
+    .field-group.span-2 { grid-column: span 2; }
+    @media (max-width: 640px) { .field-group.span-2 { grid-column: span 1; } }
+    .field-group label { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.02em; }
+    .field-group input, .field-group textarea {
+        padding: 0.6rem 0.75rem; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; font-family: inherit;
+    }
+    .field-group textarea { resize: vertical; min-height: 3.5rem; }
+
+    .editable-table-wrap { overflow-x: auto; }
+    table.editable-table { width: 100%; border-collapse: collapse; margin-bottom: 0.75rem; }
+    table.editable-table th { background: var(--light); color: var(--primary); font-size: 0.78rem; padding: 0.5rem 0.6rem; text-align: left; border: 1px solid var(--border); }
+    table.editable-table td { border: 1px solid var(--border); padding: 0.35rem; }
+    table.editable-table input { width: 100%; border: none; padding: 0.4rem; font-size: 0.85rem; font-family: inherit; background: transparent; }
+    table.editable-table input:focus { outline: 2px solid var(--accent); border-radius: 4px; }
+    .remove-row-btn { border: none; background: none; color: var(--danger); cursor: pointer; font-size: 1.1rem; line-height: 1; padding: 0.3rem; }
+    .add-row-btn { font-size: 0.82rem; color: var(--accent); background: none; border: 1px dashed var(--border); border-radius: 8px; padding: 0.4rem 0.9rem; cursor: pointer; font-weight: 600; }
+
+    .dashboard-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.5rem; }
 </style>
 </head>
 <body>
@@ -95,6 +129,7 @@
 </nav>
 
 <div class="flow-wrap">
+    <div class="stepper" id="stepper"></div>
     <div id="panelHost"></div>
 </div>
 
@@ -108,45 +143,73 @@
 
 <script>
 const panelHost = document.getElementById('panelHost');
-let selectedFile = null;
-let currentResult = null;
-let currentAssessmentId = null;
+const STEPS = ['Upload', 'Review Context', 'Results', 'Preview & Download'];
+let state = { step: 0, assessmentId: null, documentTitle: '', context: null, result: null };
 
+function renderStepper() {
+    document.getElementById('stepper').innerHTML = STEPS.map((label, i) => {
+        const cls = i < state.step ? 'done' : i === state.step ? 'active' : '';
+        return `<div class="step-pill ${cls}">${i < state.step ? '✓ ' : ''}${label}</div>`;
+    }).join('');
+}
+
+function goTo(step) {
+    state.step = step;
+    renderStepper();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+const HEAT_MAP = {
+    5: { color: '#1F4E79', meaning: 'Excellent' },
+    4: { color: '#2E7D32', meaning: 'Strong' },
+    3: { color: '#F2C94C', meaning: 'Adequate' },
+    2: { color: '#F2994A', meaning: 'Weak' },
+    1: { color: '#EB5757', meaning: 'Critical Deficiency' },
+};
+const PRIORITY_COLOR = { Critical: '#EB5757', High: '#F2994A', Medium: '#F2C94C', Low: '#2E7D32' };
+function scoreColor(score) { return (HEAT_MAP[score] || {}).color || '#9CA3AF'; }
+function scoreMeaning(score) { return (HEAT_MAP[score] || {}).meaning || 'Unscored'; }
+function priorityColor(p) { return PRIORITY_COLOR[p] || '#9CA3AF'; }
+
+// ---------------- Step 0: Upload ----------------
 function renderUploadForm(errorMessage) {
     panelHost.innerHTML = `
         <div class="panel panel-fade">
             <h2>Controlled Document Maturity Assessment</h2>
             <p class="hint">Upload a procedure, policy, manual, framework, standard, work instruction, or guideline.
-            It's scored against a fixed 15-category maturity rubric and returned as a full audit-grade report.
-            Accepts .pdf, .docx, or .txt, up to 15MB.</p>
+            MaturityAssess extracts its organizational, industry, process, and compliance context, lets you review
+            and correct it, then produces an evidence-based, audit-grade report. Accepts .pdf, .docx, or .txt, up to 15MB.</p>
             ${errorMessage ? `<div class="error-box">${escapeHtml(errorMessage)}</div>` : ''}
             <label class="upload-drop" id="uploadDrop">
                 <input type="file" id="fileInput" accept=".pdf,.docx,.txt">
                 <div class="ud-icon">📄</div>
                 <div id="uploadDropLabel">Click to choose a file, or drag one here</div>
-                <div class="ud-hint">Assessment starts automatically once a file is selected</div>
+                <div class="ud-hint">Extraction starts automatically once a file is selected</div>
             </label>
         </div>
     `;
-
     const drop = document.getElementById('uploadDrop');
     const input = document.getElementById('fileInput');
 
     function onFileChosen(file) {
-        selectedFile = file;
         const formData = new FormData();
         formData.append('file', file);
         formData.append('document_title', file.name.replace(/\.[^.]+$/, ''));
-        renderLoading();
-        fetch(`${API_BASE}/document-assessments`, { method: 'POST', body: formData })
+        renderLoading([
+            'Uploading…', 'Reading document…', 'Extracting content…', 'Identifying organization…',
+            'Identifying industry…', 'Identifying compliance requirements…', 'Mapping evidence…',
+        ]);
+        fetch(`${API_BASE}/document-assessments/extract`, { method: 'POST', body: formData })
             .then(async (res) => {
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.errors ? data.errors.join(' ') : (data.detail || 'Assessment failed.'));
-                currentResult = data.result;
-                currentAssessmentId = data.id;
-                renderResults(data);
+                if (!res.ok) throw new Error(data.errors ? data.errors.join(' ') : (data.detail || 'Extraction failed.'));
+                state.assessmentId = data.id;
+                state.documentTitle = data.document_title;
+                state.context = data.extracted_context;
+                goTo(1);
+                renderReview();
             })
-            .catch((err) => renderUploadForm(err.message || 'Something went wrong. Please try again.'));
+            .catch((err) => { goTo(0); renderUploadForm(err.message || 'Something went wrong. Please try again.'); });
     }
 
     input.addEventListener('change', () => { if (input.files[0]) onFileChosen(input.files[0]); });
@@ -159,70 +222,264 @@ function renderUploadForm(errorMessage) {
     });
 }
 
-function renderLoading() {
+function renderLoading(messages) {
     panelHost.innerHTML = `
         <div class="panel loading-panel">
             <div class="spinner"></div>
-            <h2>Analyzing your document…</h2>
-            <p class="hint">This is a full audit-grade assessment with detailed findings for every category, so it can take a few minutes — please don't close this tab.</p>
+            <h2 id="loadingHeadline">Working…</h2>
+            <p class="hint">This is a full audit-grade assessment, so it can take a few minutes — please don't close this tab.</p>
+            <div class="progress-line" id="progressLine"></div>
         </div>
+    `;
+    let i = 0;
+    const line = document.getElementById('progressLine');
+    line.textContent = messages[0];
+    const timer = setInterval(() => {
+        i = (i + 1) % messages.length;
+        if (!document.body.contains(line)) { clearInterval(timer); return; }
+        line.textContent = messages[i];
+    }, 2200);
+}
+
+// ---------------- Step 1: Review Extracted Context ----------------
+// Fields are flat on the context object (no nesting) — a first version with
+// nested sub-objects made the Claude structured-output schema too large for
+// its strict JSON-schema grammar. These groupings are purely for display.
+const SIMPLE_SECTIONS = [
+    { title: 'Organization', fields: ['organization_name', 'business_unit', 'department', 'function', 'location', 'organization_notes'] },
+    { title: 'Industry', fields: ['industry', 'sub_industry', 'business_model', 'operating_environment', 'industry_notes'] },
+    { title: 'Process', fields: ['process_name', 'process_purpose', 'process_scope', 'process_boundaries', 'process_inputs', 'process_outputs', 'process_activities', 'process_owner'] },
+    { title: 'Governance', fields: ['governance_roles', 'governance_responsibilities', 'governance_authority', 'governance_approvals', 'governance_escalation'] },
+    { title: 'Performance & Technology', fields: ['performance_targets', 'performance_slas', 'automation_notes'] },
+    { title: 'Document Metadata', fields: ['document_title', 'document_number', 'document_version', 'document_owner', 'document_author', 'document_approver', 'effective_date', 'review_date', 'classification'] },
+];
+const LIST_TEXT_FIELDS = [
+    { key: 'controls', title: 'Controls (one per line)' },
+    { key: 'risks', title: 'Risks (one per line)' },
+    { key: 'kpis', title: 'KPIs (one per line)' },
+    { key: 'systems', title: 'Systems (one per line)' },
+];
+const TABLE_SECTIONS = [
+    { key: 'compliance_profile', title: 'Compliance / Standards Profile', columns: ['requirement', 'req_type', 'applicability', 'evidence', 'status', 'source'] },
+];
+
+function fieldLabel(f) { return f.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()); }
+
+function renderEditableTable(sectionKey, columns, rows) {
+    const bodyRows = (rows || []).map((row) => `
+        <tr>
+            ${columns.map((col) => `<td><input data-col="${col}" value="${escapeHtml(row[col] || '')}"></td>`).join('')}
+            <td><button type="button" class="remove-row-btn" title="Remove row">✕</button></td>
+        </tr>
+    `).join('');
+    return `
+        <div class="editable-table-wrap">
+            <table class="editable-table" id="table-${sectionKey}">
+                <thead><tr>${columns.map((c) => `<th>${escapeHtml(fieldLabel(c))}</th>`).join('')}<th></th></tr></thead>
+                <tbody>${bodyRows}</tbody>
+            </table>
+        </div>
+        <button type="button" class="add-row-btn" data-add-for="${sectionKey}">+ Add Row</button>
     `;
 }
 
-const HEAT_MAP = {
-    5: { color: '#1F4E79', meaning: 'Excellent' },
-    4: { color: '#2E7D32', meaning: 'Strong' },
-    3: { color: '#F2C94C', meaning: 'Adequate' },
-    2: { color: '#F2994A', meaning: 'Weak' },
-    1: { color: '#EB5757', meaning: 'Critical Deficiency' },
-};
-function scoreColor(score) { return (HEAT_MAP[score] || {}).color || '#9CA3AF'; }
-function scoreMeaning(score) { return (HEAT_MAP[score] || {}).meaning || 'Unscored'; }
-
-function renderResults(data) {
-    const r = data.result;
+function renderReview() {
+    const ctx = state.context;
     panelHost.innerHTML = `
         <div class="panel panel-fade">
-            <h2>${escapeHtml(data.document_title)}</h2>
-            <p class="hint">Controlled Document Maturity Assessment</p>
+            <h2>Review Extracted Context</h2>
+            <p class="hint">Here's what was extracted from your document. Correct anything that's wrong or incomplete —
+            these corrections are used for the final assessment.</p>
 
-            <div class="results-level">
-                <div class="level-name">${escapeHtml(r.overall_maturity_level)}</div>
+            ${SIMPLE_SECTIONS.map((sec) => `
+                <div class="results-section">
+                    <h3>${escapeHtml(sec.title)}</h3>
+                    <div class="field-grid">
+                        ${sec.fields.map((f) => `
+                            <div class="field-group${/notes|purpose|scope|activities|responsibilities/.test(f) ? ' span-2' : ''}">
+                                <label>${escapeHtml(fieldLabel(f))}</label>
+                                <input data-path="${f}" value="${escapeHtml(ctx[f] || '')}">
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('')}
+
+            <div class="results-section">
+                <h3>Controls, Risks &amp; Systems</h3>
+                <div class="field-grid">
+                    ${LIST_TEXT_FIELDS.map((f) => `
+                        <div class="field-group span-2">
+                            <label>${escapeHtml(f.title)}</label>
+                            <textarea data-path="${f.key}">${escapeHtml((ctx[f.key] || []).join('\n'))}</textarea>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
+
+            ${TABLE_SECTIONS.map((sec) => `
+                <div class="results-section">
+                    <h3>${escapeHtml(sec.title)}</h3>
+                    ${renderEditableTable(sec.key, sec.columns, ctx[sec.key])}
+                </div>
+            `).join('')}
+
+            <div class="results-section">
+                <button class="btn btn-primary" id="continueBtn">Continue to Assessment</button>
+            </div>
+        </div>
+    `;
+
+    panelHost.querySelectorAll('.add-row-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const sec = TABLE_SECTIONS.find((s) => s.key === btn.dataset.addFor);
+            const tbody = document.querySelector(`#table-${sec.key} tbody`);
+            const tr = document.createElement('tr');
+            tr.innerHTML = sec.columns.map((col) => `<td><input data-col="${col}" value=""></td>`).join('') +
+                `<td><button type="button" class="remove-row-btn" title="Remove row">✕</button></td>`;
+            tbody.appendChild(tr);
+            tr.querySelector('.remove-row-btn').addEventListener('click', () => tr.remove());
+        });
+    });
+    panelHost.querySelectorAll('.remove-row-btn').forEach((btn) => {
+        btn.addEventListener('click', () => btn.closest('tr').remove());
+    });
+
+    document.getElementById('continueBtn').addEventListener('click', () => {
+        const corrected = collectContext();
+        state.context = corrected;
+        renderLoading([
+            'Grounding context…', 'Scoring against 15 categories…', 'Identifying gaps…',
+            'Ranking recommendations…', 'Building roadmap…', 'Generating report…',
+        ]);
+        fetch(`${API_BASE}/document-assessments/${state.assessmentId}/assess`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ context: corrected }),
+        }).then(async (res) => {
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.errors ? data.errors.join(' ') : (data.detail || 'Assessment failed.'));
+            state.result = data.result;
+            goTo(2);
+            renderDashboard();
+        }).catch((err) => { goTo(1); renderReview(); alert(err.message || 'Something went wrong. Please try again.'); });
+    });
+}
+
+function collectContext() {
+    const ctx = JSON.parse(JSON.stringify(state.context));
+    SIMPLE_SECTIONS.forEach((sec) => {
+        sec.fields.forEach((f) => {
+            const el = panelHost.querySelector(`[data-path="${f}"]`);
+            if (el) ctx[f] = el.value;
+        });
+    });
+    LIST_TEXT_FIELDS.forEach((f) => {
+        const el = panelHost.querySelector(`[data-path="${f.key}"]`);
+        if (el) ctx[f.key] = el.value.split('\n').map((s) => s.trim()).filter(Boolean);
+    });
+    TABLE_SECTIONS.forEach((sec) => {
+        const rows = panelHost.querySelectorAll(`#table-${sec.key} tbody tr`);
+        ctx[sec.key] = Array.from(rows).map((tr) => {
+            const obj = {};
+            sec.columns.forEach((col) => {
+                const input = tr.querySelector(`[data-col="${col}"]`);
+                obj[col] = input ? input.value : '';
+            });
+            return obj;
+        });
+    });
+    return ctx;
+}
+
+// ---------------- Step 2: Results Dashboard ----------------
+function renderDashboard() {
+    const r = state.result;
+    const gapsByPriority = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+    (r.gap_analysis || []).forEach((g) => { if (gapsByPriority[g.priority] !== undefined) gapsByPriority[g.priority]++; });
+
+    panelHost.innerHTML = `
+        <div class="panel panel-fade">
+            <h2>${escapeHtml(state.documentTitle)}</h2>
+            <p class="hint">Results Dashboard</p>
+
+            <div class="results-level"><div class="level-name">${escapeHtml(r.overall_maturity_level)}</div></div>
             <div class="score-cards">
                 <div class="score-card"><div class="val">${r.overall_maturity_score}/5</div><div class="lbl">Overall Score</div></div>
+                <div class="score-card"><div class="val">${r.compliance_readiness_pct}%</div><div class="lbl">Compliance Readiness</div></div>
+                <div class="score-card"><div class="val">${r.evidence_coverage_pct}%</div><div class="lbl">Evidence Coverage</div></div>
+                <div class="score-card"><div class="val">${r.assessment_confidence}</div><div class="lbl">Confidence</div></div>
                 <div class="score-card"><div class="val">${r.overall_readiness_pct}%</div><div class="lbl">Readiness</div></div>
-                <div class="score-card"><div class="val">${r.category_scores.length}</div><div class="lbl">Categories Assessed</div></div>
             </div>
 
             <div class="results-section">
-                <h3>Overall Assessment</h3>
-                <p>${escapeHtml(r.overall_assessment)}</p>
+                <h3>Maturity Heat Map</h3>
+                <div class="doc-table-wrap">
+                    <table class="doc-table">
+                        <thead><tr><th>Category</th><th>Score</th><th>Confidence</th></tr></thead>
+                        <tbody>
+                            ${r.category_scores.map((c) => `
+                                <tr>
+                                    <td>${escapeHtml(c.category)}</td>
+                                    <td><span class="score-pill" style="background:${scoreColor(c.score)}">${c.score}</span></td>
+                                    <td>${escapeHtml(c.confidence)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <div class="results-section">
-                <h3>Highest &amp; Lowest Scoring Areas</h3>
-                <p><strong>Highest:</strong> ${escapeHtml(r.highest_scoring_areas.join(', ') || 'None')}</p>
-                <p><strong>Lowest:</strong> ${escapeHtml(r.lowest_scoring_areas.join(', ') || 'None')}</p>
+                <h3>Gaps by Priority</h3>
+                <div class="score-cards">
+                    ${['Critical', 'High', 'Medium', 'Low'].map((p) => `
+                        <div class="score-card"><div class="val" style="color:${priorityColor(p)}">${gapsByPriority[p]}</div><div class="lbl">${p}</div></div>
+                    `).join('')}
+                </div>
             </div>
 
             <div class="results-section">
                 <h3>Key Strengths &amp; Weaknesses</h3>
                 <div class="sw-grid">
-                    <div class="sw-col strengths">
-                        <h4>Strengths</h4>
-                        <ul>${r.key_strengths.map((s) => `<li>${escapeHtml(s)}</li>`).join('') || '<li>None identified</li>'}</ul>
-                    </div>
-                    <div class="sw-col weaknesses">
-                        <h4>Weaknesses</h4>
-                        <ul>${r.key_weaknesses.map((s) => `<li>${escapeHtml(s)}</li>`).join('') || '<li>None identified</li>'}</ul>
-                    </div>
+                    <div class="sw-col strengths"><h4>Strengths</h4><ul>${r.key_strengths.map((s) => `<li>${escapeHtml(s)}</li>`).join('') || '<li>None identified</li>'}</ul></div>
+                    <div class="sw-col weaknesses"><h4>Weaknesses</h4><ul>${r.key_weaknesses.map((s) => `<li>${escapeHtml(s)}</li>`).join('') || '<li>None identified</li>'}</ul></div>
                 </div>
             </div>
 
             <div class="results-section">
-                <h3>Detailed Assessment Table</h3>
-                <p class="section-note">Every category scored 1 (Initial/Ad Hoc) to 5 (Optimized/Best Practice).</p>
+                <h3>Priority Recommendations</h3>
+                <ul>${r.top_recommendations.slice(0, 5).map((rec) => `<li>${escapeHtml(rec.recommendation)}</li>`).join('')}</ul>
+            </div>
+
+            <div class="dashboard-actions">
+                <button class="btn btn-primary" id="generateReportBtn">Generate Full Report</button>
+                <button class="btn btn-secondary" id="backToReviewBtn">Edit Context &amp; Re-run</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('generateReportBtn').addEventListener('click', () => { goTo(3); renderPreview(); });
+    document.getElementById('backToReviewBtn').addEventListener('click', () => { goTo(1); renderReview(); });
+}
+
+// ---------------- Step 3: Report Preview ----------------
+function renderPreview() {
+    const r = state.result;
+    panelHost.innerHTML = `
+        <div class="panel panel-fade">
+            <h2>${escapeHtml(state.documentTitle)}</h2>
+            <p class="hint">Report Preview — this mirrors the structure of the downloadable Word report.</p>
+
+            <div class="results-section">
+                <h3>1. Executive Summary</h3>
+                <p>${escapeHtml(r.overall_assessment)}</p>
+                <div class="conclusion-grid">
+                    <div class="conclusion-card"><div class="lbl">Overall Score</div><div class="val">${r.overall_maturity_score}/5 — ${escapeHtml(r.overall_maturity_level)}</div></div>
+                    <div class="conclusion-card"><div class="lbl">Readiness</div><div class="val">${r.overall_readiness_pct}%</div></div>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h3>2-5. Detailed Assessment Table</h3>
                 <div class="doc-table-wrap">
                     <table class="doc-table">
                         <thead><tr><th>Category</th><th>Score</th><th>Evidence Found</th><th>Gaps Identified</th><th>Recommendation</th><th>Heat Map</th></tr></thead>
@@ -243,18 +500,37 @@ function renderResults(data) {
             </div>
 
             <div class="results-section">
-                <h3>Top Improvement Recommendations</h3>
+                <h3>7. Detailed Gap Analysis</h3>
                 <div class="doc-table-wrap">
                     <table class="doc-table">
-                        <thead><tr><th>Recommendation</th><th>Business Benefit</th><th>Risk if Not Addressed</th><th>Priority</th><th>Est. Maturity Gain</th><th>Quick Win</th></tr></thead>
+                        <thead><tr><th>Gap ID</th><th>Category</th><th>Requirement</th><th>Impact</th><th>Priority</th></tr></thead>
+                        <tbody>
+                            ${(r.gap_analysis || []).map((g) => `
+                                <tr>
+                                    <td>${escapeHtml(g.gap_id)}</td>
+                                    <td>${escapeHtml(g.category)}</td>
+                                    <td>${escapeHtml(g.requirement)}</td>
+                                    <td>${escapeHtml(g.impact)}</td>
+                                    <td><span class="priority-badge" style="background:${priorityColor(g.priority)}">${escapeHtml(g.priority)}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h3>8-9. Top Recommendations &amp; Quick Wins</h3>
+                <div class="doc-table-wrap">
+                    <table class="doc-table">
+                        <thead><tr><th>Recommendation</th><th>Priority</th><th>Est. Maturity Gain</th><th>Evidence Basis</th><th>Quick Win</th></tr></thead>
                         <tbody>
                             ${r.top_recommendations.map((rec) => `
                                 <tr>
                                     <td>${escapeHtml(rec.recommendation)}</td>
-                                    <td>${escapeHtml(rec.business_benefit)}</td>
-                                    <td>${escapeHtml(rec.risk_if_not_addressed)}</td>
-                                    <td>${escapeHtml(rec.priority)}</td>
+                                    <td><span class="priority-badge" style="background:${priorityColor(rec.priority)}">${escapeHtml(rec.priority)}</span></td>
                                     <td>${escapeHtml(rec.estimated_maturity_gain)}</td>
+                                    <td>${escapeHtml(rec.evidence_basis)}</td>
                                     <td>${rec.quick_win ? '<span class="quick-win-badge">Quick Win</span>' : ''}</td>
                                 </tr>
                             `).join('')}
@@ -264,26 +540,32 @@ function renderResults(data) {
             </div>
 
             <div class="results-section">
-                <h3>Management Conclusion</h3>
-                <div class="conclusion-grid">
-                    <div class="conclusion-card"><div class="lbl">Current Maturity Level</div><div class="val">${escapeHtml(r.current_maturity_level)}</div></div>
-                    <div class="conclusion-card"><div class="lbl">Target Maturity Level</div><div class="val">${escapeHtml(r.target_maturity_level)}</div></div>
-                </div>
-                <p>${escapeHtml(r.roadmap_to_level_5)}</p>
+                <h3>10. 30/60/90/Beyond-90 Roadmap</h3>
+                ${['roadmap_day_30', 'roadmap_day_60', 'roadmap_day_90', 'roadmap_beyond_90'].map((key, i) => `
+                    <h4>${['0-30 Days', '31-60 Days', '61-90 Days', 'Beyond 90 Days'][i]}</h4>
+                    <ul>${(r[key] || []).map((item) => `<li>${escapeHtml(item)}</li>`).join('') || '<li>None identified.</li>'}</ul>
+                `).join('')}
             </div>
 
             <div class="results-section">
-                <a class="btn btn-primary" href="${API_BASE}/document-assessments/${data.id}/report.docx">Download Full Report (.docx)</a>
-                <button class="btn btn-secondary" id="startOverBtn" style="margin-left:0.75rem;">Assess Another Document</button>
+                <h3>11-12. Target State &amp; Management Conclusion</h3>
+                <div class="conclusion-grid">
+                    <div class="conclusion-card"><div class="lbl">Current Maturity Level</div><div class="val">${escapeHtml(r.current_maturity_level)}</div></div>
+                    <div class="conclusion-card"><div class="lbl">Compliance Readiness</div><div class="val">${r.compliance_readiness_pct}%</div></div>
+                </div>
+                <p>${escapeHtml(r.target_maturity_level)}</p>
+            </div>
+
+            <div class="dashboard-actions">
+                <button class="btn btn-secondary" id="backToDashboardBtn">Edit / Regenerate</button>
+                <a class="btn btn-primary" href="${API_BASE}/document-assessments/${state.assessmentId}/report.docx">Download Word Document</a>
             </div>
         </div>
     `;
-    document.getElementById('startOverBtn').addEventListener('click', () => {
-        selectedFile = null;
-        renderUploadForm();
-    });
+    document.getElementById('backToDashboardBtn').addEventListener('click', () => { goTo(1); renderReview(); });
 }
 
+renderStepper();
 renderUploadForm();
 </script>
 </body>

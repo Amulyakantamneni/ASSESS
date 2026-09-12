@@ -171,8 +171,13 @@ class FrameworkCrosswalk(Base):
 class DocumentAssessment(Base):
     """A standalone controlled-document maturity assessment: upload a procedure,
     policy, or similar document and get it scored against the fixed 15-category
-    rubric directly, with no questionnaire involved. Unrelated to the
-    Industry/Standard/Template/Assessment flow above."""
+    rubric, with no questionnaire involved. Unrelated to the
+    Industry/Standard/Template/Assessment flow above.
+
+    Two-phase flow: "extract" produces extracted_context for the user to
+    review/correct; "assess" consumes that (corrected_context if the user
+    edited anything, else extracted_context) alongside document_text to
+    produce the final result and docx."""
     __tablename__ = "document_assessments"
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
@@ -180,6 +185,10 @@ class DocumentAssessment(Base):
     document_title: Mapped[str] = mapped_column(String, nullable=False)
     original_filename: Mapped[str] = mapped_column(String, nullable=False)
     file_path: Mapped[str] = mapped_column(String, nullable=False)
+    document_text: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String, default="extracted")  # extracted|assessed
+    extracted_context: Mapped[dict] = mapped_column(JSON, default=dict)
+    corrected_context: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     result: Mapped[dict] = mapped_column(JSON, default=dict)
     docx_file_path: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
