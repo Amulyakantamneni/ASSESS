@@ -52,9 +52,20 @@ def _extract_pdf(contents: bytes) -> str:
                 "Please remove the password, or use the manual assessment instead."
             )
 
+    try:
+        page_count = len(reader.pages)
+    except Exception:
+        raise ValueError("This PDF appears to be corrupted or unreadable. Please try another file.")
+
     pages = []
-    for i, page in enumerate(reader.pages, start=1):
-        text = (page.extract_text() or "").strip()
+    for i in range(1, page_count + 1):
+        # A single malformed page (bad content stream, broken font, etc.) must
+        # not take down extraction for the rest of a real-world PDF — fall
+        # back to OCR for that page, or skip it, and keep going.
+        try:
+            text = (reader.pages[i - 1].extract_text() or "").strip()
+        except Exception:
+            text = ""
         if len(text) < MIN_NATIVE_TEXT_CHARS:
             ocr_text = _ocr_pdf_page(contents, i).strip()
             if ocr_text:
@@ -65,24 +76,31 @@ def _extract_pdf(contents: bytes) -> str:
 
 
 def _extract_docx(contents: bytes) -> str:
-    doc = DocxDocument(io.BytesIO(contents))
+    try:
+        doc = DocxDocument(io.BytesIO(contents))
+    except Exception:
+        raise ValueError("This Word document appears to be corrupted or unreadable. Please try another file.")
+
     lines = []
-    current_section = None
     for block in doc.iter_inner_content():
-        if isinstance(block, Paragraph):
-            text = block.text.strip()
-            if not text:
-                continue
-            if block.style.name.startswith("Heading"):
-                current_section = text
-                lines.append(f"[Section: {current_section}]")
-            else:
-                lines.append(text)
-        elif isinstance(block, Table):
-            for row in block.rows:
-                cells = [c.text.strip() for c in row.cells if c.text.strip()]
-                if cells:
-                    lines.append(" | ".join(cells))
+        # One malformed paragraph/table/style shouldn't take down extraction
+        # for the rest of a real-world document.
+        try:
+            if isinstance(block, Paragraph):
+                text = block.text.strip()
+                if not text:
+                    continue
+                if block.style.name.startswith("Heading"):
+                    lines.append(f"[Section: {text}]")
+                else:
+                    lines.append(text)
+            elif isinstance(block, Table):
+                for row in block.rows:
+                    cells = [c.text.strip() for c in row.cells if c.text.strip()]
+                    if cells:
+                        lines.append(" | ".join(cells))
+        except Exception:
+            continue
     return "\n".join(lines)
 
 
